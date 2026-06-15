@@ -733,6 +733,27 @@ async function apiGetQuestions(levelId) {
   }));
 }
 
+
+async function apiGetAudios(fileIds) {
+  const ids = [...new Set(
+    (fileIds || [])
+      .map(id => String(id || '').trim())
+      .filter(Boolean)
+  )];
+
+  if (!ids.length) return {};
+
+  const res = await gasJsonp('audios', {
+    fileIds: ids.join(',')
+  });
+
+  if (res && res.audios && typeof res.audios === 'object') {
+    return res.audios;
+  }
+
+  throw new Error(res && res.message ? res.message : 'โหลดเสียงแบบชุดไม่สำเร็จ');
+}
+
 async function apiSaveResult(payload) {
   const formData = new FormData();
 
@@ -863,7 +884,7 @@ async function startLevel(level) {
   $('letterGrid').innerHTML = '';
   $('answerZone').innerHTML = '<span class="placeholder">เลือกการ์ดคำตอบ</span>';
 
-  showGameLoading('กำลังโหลดข้อฝึก...', 8);
+  showGameLoading('กำลังโหลดข้อฝึก...', 10);
 
   try {
     questions = await apiGetQuestions(level.id);
@@ -874,12 +895,24 @@ async function startLevel(level) {
       return;
     }
 
-    updateGameLoading(20, 'กำลังเตรียมเสียงของด่านนี้...');
-    await preloadLevelAudiosWithProgress();
+    const audioIds = getAudioIdsFromQuestions(questions);
+    const firstAudioId = questions[0] && questions[0].audioFileId
+      ? String(questions[0].audioFileId).trim()
+      : '';
+
+    updateGameLoading(45, 'กำลังเตรียมเสียงข้อแรก...');
+
+    if (firstAudioId) {
+      await preloadAudioBatch([firstAudioId]);
+    }
 
     renderQuestion();
     updateGameLoading(100, 'พร้อมเล่นแล้ว!');
-    setTimeout(hideGameLoading, 250);
+    setTimeout(hideGameLoading, 220);
+
+    // โหลดเสียงข้อที่เหลือต่อแบบเงียบ ๆ หลังเข้าเกมแล้ว
+    const remainingAudioIds = audioIds.filter(id => id !== firstAudioId);
+    preloadRemainingAudiosInBackground(remainingAudioIds);
   } catch (err) {
     hideGameLoading();
     setFeedback('โหลดข้อฝึกไม่สำเร็จ: ' + (err.message || err), 'bad');
@@ -969,6 +1002,79 @@ function setFeedback(text, type) {
   el.className = 'feedback';
   if (type === 'good') el.classList.add('good');
   if (type === 'bad') el.classList.add('bad');
+}
+
+function getAudioIdsFromQuestions(list) {
+  return [...new Set(
+    (list || [])
+      .map(q => String(q.audioFileId || '').trim())
+      .filter(Boolean)
+  )];
+}
+
+function chunkArray(list, size) {
+  const chunks = [];
+  for (let i = 0; i < list.length; i += size) {
+    chunks.push(list.slice(i, i + size));
+  }
+  return chunks;
+}
+
+async function preloadAudioBatch(fileIds) {
+  const ids = [...new Set(
+    (fileIds || [])
+      .map(id => String(id || '').trim())
+      .filter(id => id && !audioDataUrlCache[id])
+  )];
+
+  if (!ids.length) return {};
+
+  try {
+    const audios = await apiGetAudios(ids);
+
+    Object.keys(audios || {}).forEach(fileId => {
+      if (audios[fileId]) {
+        audioDataUrlCache[fileId] = audios[fileId];
+      }
+    });
+
+    return audios || {};
+  } catch (err) {
+    // ถ้า api=audios ยังไม่ได้ Deploy หรือโหลดเป็นชุดไม่สำเร็จ ให้ถอยกลับไปโหลดทีละไฟล์
+    console.warn('batch audio failed, fallback to single audio:', err);
+
+    await Promise.all(ids.map(fileId => preloadAudioByFileId(fileId)));
+
+    const result = {};
+    ids.forEach(fileId => {
+      if (audioDataUrlCache[fileId]) result[fileId] = audioDataUrlCache[fileId];
+    });
+    return result;
+  }
+}
+
+async function preloadRemainingAudiosInBackground(fileIds) {
+  const ids = [...new Set(
+    (fileIds || [])
+      .map(id => String(id || '').trim())
+      .filter(id => id && !audioDataUrlCache[id])
+  )];
+
+  if (!ids.length) return;
+
+  const chunks = chunkArray(ids, 5);
+
+  for (const chunk of chunks) {
+    try {
+      await preloadAudioBatch(chunk);
+      console.log('โหลดเสียงพื้นหลังสำเร็จ:', chunk.length, 'ไฟล์');
+    } catch (err) {
+      console.warn('โหลดเสียงพื้นหลังไม่สำเร็จ:', err);
+    }
+
+    // เว้นจังหวะเล็กน้อย ลดโอกาส Apps Script หน่วงหรือโดนเรียกถี่เกินไป
+    await new Promise(resolve => setTimeout(resolve, 120));
+  }
 }
 
 function showGameLoading(text = 'กำลังโหลดข้อมูลเกม', percent = 0) {
