@@ -607,6 +607,7 @@ button { font-family: "Sarabun", sans-serif; }
 <div class="toast" id="toast">พร้อมใช้งาน</div>
 <audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
 <audio id="clickSfxAudio" src="assets/CLICK3.WAV" preload="auto"></audio>
+<audio id="correctVoiceAudio" src="assets/kengmakka.MP3" preload="auto"></audio>
 <button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
 
 
@@ -716,6 +717,55 @@ function playClickSfx() {
   sound.play().catch(err => {
     console.warn('click sound failed:', err);
   });
+}
+
+function playCorrectVoice() {
+  const voice = $('correctVoiceAudio');
+
+  duckBgmTemporarily(1400);
+
+  // ถ้าไม่มีไฟล์เสียง หรือโหลดไม่ได้ จะใช้เสียงสังเคราะห์แทน
+  if (!voice) {
+    speakThai('เก่งมากค่ะ');
+    return;
+  }
+
+  try {
+    voice.pause();
+    voice.currentTime = 0;
+    voice.volume = 1;
+
+    const playPromise = voice.play();
+
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(err => {
+        console.warn('correct voice failed:', err);
+        speakThai('เก่งมากค่ะ');
+      });
+    }
+  } catch (err) {
+    console.warn('correct voice failed:', err);
+    speakThai('เก่งมากค่ะ');
+  }
+}
+
+function duckBgmTemporarily(duration = 1400) {
+  const bgm = $('bgmAudio');
+  if (!bgm || bgm.paused) return;
+
+  const normalVolume = Number.isFinite(bgm._normalVolume)
+    ? bgm._normalVolume
+    : (bgm.volume || 0.24);
+
+  bgm._normalVolume = normalVolume;
+  bgm.volume = Math.min(normalVolume, 0.08);
+
+  clearTimeout(bgm._duckTimer);
+  bgm._duckTimer = setTimeout(() => {
+    if (bgm && !bgm.paused) {
+      bgm.volume = bgm._normalVolume || 0.24;
+    }
+  }, duration);
 }
 
 function stopBgm() {
@@ -1085,11 +1135,12 @@ function answerQuestion(button, choice) {
 
   $('answerZone').textContent = choice;
 
-  if (correct) {
-    score += 1;
-    button.classList.add('correct');
-    setFeedback('ถูกต้อง เก่งมาก! ⭐', 'good');
-  } else {
+if (correct) {
+  score += 1;
+  button.classList.add('correct');
+  setFeedback('ถูกต้อง เก่งมาก! ⭐', 'good');
+  playCorrectVoice();
+} else {
     button.classList.add('wrong');
     setFeedback(`ยังไม่ถูก คำตอบคือ ${q.answer}`, 'bad');
     highlightCorrect(q.answer);
@@ -1104,7 +1155,7 @@ function answerQuestion(button, choice) {
     else {
       renderQuestion();
     }
-  }, correct ? 850 : 1200);
+  }, correct ? 1150 : 1200);
 }
 
 function highlightCorrect(answer) {
