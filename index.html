@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Quest - ภารกิจพิชิตคำ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="app" id="app">
+
+    <section class="screen active" id="startScreen">
+      <div class="home-screen-inner">
+        <div class="logo-wrap home-logo-wrap">
+          <img class="logo-img home-logo" src="assets/logo.png" alt="Word Quest Logo" />
+          <div class="fallback-logo">
+            <div class="word">Word</div>
+            <div class="quest">Quest</div>
+            <div class="thai">ภารกิจพิชิตคำ</div>
+          </div>
+        </div>
+
+        <button class="play-button" type="button" id="startBtn">เริ่มเกม!</button>
+        <div class="home-hint">ฟังเสียง เลือกคำ พิชิตทุกด่าน</div>
+      </div>
+    </section>
+
+    <section class="screen" id="levelScreen">
+      <div class="level-screen-inner">
+        <div class="logo-wrap level-logo-wrap">
+          <img class="logo-img level-logo" src="assets/logo.png" alt="Word Quest Logo" />
+          <div class="fallback-logo small">
+            <div class="word">Word</div>
+            <div class="quest">Quest</div>
+            <div class="thai">ภารกิจพิชิตคำ</div>
+          </div>
+        </div>
+
+        <div class="level-panel">
+          <div class="level-head">
+            <h1 class="level-title">เลือกด่าน</h1>
+            <p class="level-subtitle">ผ่านด่านเพื่อสะสมดาว และปลดล็อกภารกิจถัดไป</p>
+          </div>
+
+          <div class="level-map" id="levelMap"></div>
+          <div class="level-status" id="levelStatus">กำลังโหลด Level...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="gameScreen">
+      <div class="game-screen-inner">
+        <div class="game-topbar">
+          <div class="logo-wrap game-logo-wrap">
+            <img class="logo-img game-logo" src="assets/logo.png" alt="Word Quest Logo" />
+            <div class="fallback-logo mini">
+              <div class="word">Word</div>
+              <div class="quest">Quest</div>
+            </div>
+          </div>
+
+          <div class="hud-strip">
+            <div class="hud-pill"><div class="hud-label">ด่าน</div><div class="hud-value" id="hudLevel">-</div></div>
+            <div class="hud-pill"><div class="hud-label">ข้อ</div><div class="hud-value" id="hudQuestion">-</div></div>
+            <div class="hud-pill"><div class="hud-label">คะแนน</div><div class="hud-value" id="hudScore">0</div></div>
+            <div class="hud-pill"><div class="hud-label">ดาว</div><div class="hud-value" id="hudStars">☆☆☆</div></div>
+          </div>
+
+          <button class="small-btn" type="button" id="backLevelBtn">เลือกด่าน</button>
+        </div>
+
+        <div class="game-panel">
+          <h2 class="mission-title" id="missionTitle">ฟังเสียง แล้วเลือกคำตอบ</h2>
+          <p class="mission-subtitle" id="missionSubtitle">กดปุ่มฟังเสียง แล้วเลือกการ์ดที่ถูกต้อง</p>
+
+          <div class="sound-row">
+            <button class="sound-button" type="button" id="soundBtn">🔊 ฟังเสียง</button>
+          </div>
+
+          <div class="answer-zone-wrap">
+            <div class="answer-zone" id="answerZone"><span class="placeholder">เลือกการ์ดคำตอบ</span></div>
+          </div>
+
+          <div class="letter-grid" id="letterGrid"></div>
+          <div class="feedback" id="feedback"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="resultScreen">
+      <div class="result-screen-inner">
+        <div class="result-panel">
+          <h2 class="result-title">สรุปผลภารกิจ</h2>
+          <div class="result-stars" id="resultStars">★★★</div>
+          <div class="result-score" id="resultScore">0 / 0</div>
+          <div id="resultMessage" class="mission-subtitle">เก่งมาก!</div>
+
+          <div class="result-actions">
+            <button class="primary-action" type="button" id="continueBtn">เลือกด่านต่อไป</button>
+            <button class="secondary-action" type="button" id="restartBtn">เล่นด่านนี้อีกครั้ง</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast">พร้อมใช้งาน</div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
