@@ -400,6 +400,8 @@ let score = 0;
 let details = [];
 let isAnswering = false;
 let currentAudio = null;
+let audioDataUrlCache = {};
+let audioLoadingMap = {};
 
 const $ = (id) => document.getElementById(id);
 
@@ -619,7 +621,6 @@ async function startLevel(level) {
       return;
     }
     renderQuestion();
-    setTimeout(playPromptSound, 250);
   } catch (err) {
     setFeedback('โหลดข้อฝึกไม่สำเร็จ: ' + (err.message || err), 'bad');
   }
@@ -648,6 +649,7 @@ function renderQuestion() {
   });
 
   updateHud();
+  preloadCurrentAudio();
 }
 
 function parseChoices(value) {
@@ -682,7 +684,6 @@ function answerQuestion(button, choice) {
     if (currentIndex >= questions.length) finishLevel();
     else {
       renderQuestion();
-      setTimeout(playPromptSound, 200);
     }
   }, correct ? 850 : 1200);
 }
@@ -710,32 +711,79 @@ function setFeedback(text, type) {
   if (type === 'bad') el.classList.add('bad');
 }
 
+async function preloadCurrentAudio() {
+  const q = questions[currentIndex];
+  if (!q || !q.audioFileId) return '';
+
+  const fileId = String(q.audioFileId || '').trim();
+  if (!fileId) return '';
+
+  if (audioDataUrlCache[fileId]) {
+    return audioDataUrlCache[fileId];
+  }
+
+  if (audioLoadingMap[fileId]) {
+    return audioLoadingMap[fileId];
+  }
+
+  audioLoadingMap[fileId] = gasJsonp('audio', { fileId })
+    .then(res => {
+      if (res && res.audioDataUrl) {
+        audioDataUrlCache[fileId] = res.audioDataUrl;
+        return res.audioDataUrl;
+      }
+      throw new Error(res && res.message ? res.message : 'ไม่พบข้อมูลเสียง');
+    })
+    .catch(err => {
+      console.warn('preload audio failed', err);
+      return '';
+    })
+    .finally(() => {
+      delete audioLoadingMap[fileId];
+    });
+
+  return audioLoadingMap[fileId];
+}
+
 async function playPromptSound() {
   const q = questions[currentIndex];
   if (!q) return;
 
   stopAudio();
 
-  try {
-    if (q.audioFileId) {
-      toast('กำลังโหลดเสียง...');
+  const fileId = String(q.audioFileId || '').trim();
 
-      const res = await gasJsonp('audio', {
-        fileId: q.audioFileId
-      });
+  if (fileId) {
+    let dataUrl = audioDataUrlCache[fileId];
 
-      if (res && res.audioDataUrl) {
-        currentAudio = new Audio(res.audioDataUrl);
-        await currentAudio.play();
-        return;
+    if (!dataUrl) {
+      toast('กำลังเตรียมเสียง กดอีกครั้งเมื่อโหลดเสร็จ');
+      dataUrl = await preloadCurrentAudio();
+
+      // สำคัญ: หลัง await บาง browser จะไม่ยอมให้ play อัตโนมัติแล้ว
+      // จึงให้ผู้ใช้กดปุ่ม 🔊 อีกครั้งเพื่อเล่นเสียงที่โหลดเสร็จแล้ว
+      if (dataUrl) {
+        toast('เสียงพร้อมแล้ว กด 🔊 อีกครั้ง');
+      } else {
+        speakThai(q.prompt || q.answer || '');
       }
+      return;
     }
 
-    speakThai(q.prompt || q.answer || '');
-  } catch (err) {
-    console.warn('audio failed', err);
-    speakThai(q.prompt || q.answer || '');
+    try {
+      currentAudio = new Audio(dataUrl);
+      currentAudio.volume = 1;
+      currentAudio.currentTime = 0;
+      await currentAudio.play();
+      return;
+    } catch (err) {
+      console.warn('audio play failed', err);
+      speakThai(q.prompt || q.answer || '');
+      return;
+    }
   }
+
+  speakThai(q.prompt || q.answer || '');
 }
 
 function stopAudio() {
