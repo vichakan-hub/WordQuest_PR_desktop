@@ -415,12 +415,9 @@ button { font-family: "Sarabun", sans-serif; }
   margin-bottom: 8px;
 }
 .loading-text {
-  min-height: 28px;
-  font-size: 1rem;
-  line-height: 1.4;
-  font-weight: 900;
-  color: #42627d;
-  margin-bottom: 18px;
+  display: none;
+  min-height: 0;
+  margin: 0;
 }
 .loading-bar {
   width: 100%;
@@ -572,7 +569,7 @@ button { font-family: "Sarabun", sans-serif; }
 // WORD QUEST CONFIG - GitHub เชื่อม Google Sheet + Google Drive ผ่าน Apps Script
 // =========================================================
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbx7fHEQPl5_Pr8jfMo-9i58TmEYfHiryavvIo8lketubgefSllrb08_ZqB6ic1eSncL/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbykPnlgx_y0OfbLUbXNce0afd7e0tSOKYkTNB1-wZclZIDbNJIa74MerIKwT50ZTg/exec';
 
 const STORAGE_KEY = 'WORD_QUEST_PROGRESS_GITHUB_V1';
 const DEVICE_KEY = 'WORD_QUEST_DEVICE_ID';
