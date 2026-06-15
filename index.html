@@ -585,6 +585,10 @@ let currentAudio = null;
 let audioDataUrlCache = {};
 let audioLoadingMap = {};
 let levelsReady = false;
+let gameLoadingShownPercent = 0;
+let gameLoadingTargetPercent = 0;
+let gameLoadingAnimFrame = null;
+let gameLoadingAutoTimer = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1080,28 +1084,112 @@ function showGameLoading(text = 'กำลังโหลดข้อมูล�
 
   overlay.classList.add('show');
   overlay.setAttribute('aria-hidden', 'false');
+
+  stopGameLoadingAuto();
+  cancelGameLoadingAnimation();
+  gameLoadingShownPercent = 0;
+  gameLoadingTargetPercent = 0;
+  setGameLoadingVisual(0);
+  startGameLoadingAuto(92);
   updateGameLoading(percent, text);
 }
 
 function updateGameLoading(percent, text) {
-  const fill = $('loadingBarFill');
   const label = $('loadingText');
+
+  if (label && text) label.textContent = text;
+
+  const value = Math.max(0, Math.min(100, Number(percent || 0)));
+
+  if (value >= 100) {
+    stopGameLoadingAuto();
+    animateGameLoadingTo(100, 360);
+    return;
+  }
+
+  // กันเลขย้อนกลับ และทำให้เลขค่อย ๆ ไหลไปข้างหน้า
+  const nextTarget = Math.max(gameLoadingTargetPercent, value, gameLoadingShownPercent);
+  animateGameLoadingTo(nextTarget, 520);
+}
+
+function setGameLoadingVisual(value) {
+  const fill = $('loadingBarFill');
   const percentLabel = $('loadingPercent');
 
-  const value = Math.max(0, Math.min(100, Math.round(Number(percent || 0))));
+  const displayValue = Math.max(0, Math.min(100, Number(value || 0)));
+  gameLoadingShownPercent = displayValue;
 
-  if (fill) fill.style.width = value + '%';
-  if (label && text) label.textContent = text;
-  if (percentLabel) percentLabel.textContent = value + '%';
+  if (fill) fill.style.width = displayValue.toFixed(1) + '%';
+  if (percentLabel) percentLabel.textContent = Math.round(displayValue) + '%';
+}
+
+function animateGameLoadingTo(target, duration = 520) {
+  target = Math.max(0, Math.min(100, Number(target || 0)));
+  target = Math.max(target, gameLoadingShownPercent);
+  gameLoadingTargetPercent = Math.max(gameLoadingTargetPercent, target);
+
+  cancelGameLoadingAnimation();
+
+  const startValue = gameLoadingShownPercent;
+  const endValue = gameLoadingTargetPercent;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = startValue + (endValue - startValue) * eased;
+
+    setGameLoadingVisual(current);
+
+    if (progress < 1) {
+      gameLoadingAnimFrame = requestAnimationFrame(tick);
+    } else {
+      gameLoadingAnimFrame = null;
+    }
+  }
+
+  gameLoadingAnimFrame = requestAnimationFrame(tick);
+}
+
+function startGameLoadingAuto(maxPercent = 92) {
+  stopGameLoadingAuto();
+
+  gameLoadingAutoTimer = setInterval(() => {
+    if (gameLoadingShownPercent >= maxPercent) return;
+
+    // ยิ่งใกล้ 92% ยิ่งช้าลง จะได้ไม่ชน 100% ก่อนโหลดจริงเสร็จ
+    const gap = maxPercent - gameLoadingShownPercent;
+    const step = Math.max(0.35, gap * 0.055);
+    const next = Math.min(maxPercent, gameLoadingShownPercent + step);
+
+    animateGameLoadingTo(next, 420);
+  }, 280);
+}
+
+function stopGameLoadingAuto() {
+  if (gameLoadingAutoTimer) {
+    clearInterval(gameLoadingAutoTimer);
+    gameLoadingAutoTimer = null;
+  }
+}
+
+function cancelGameLoadingAnimation() {
+  if (gameLoadingAnimFrame) {
+    cancelAnimationFrame(gameLoadingAnimFrame);
+    gameLoadingAnimFrame = null;
+  }
 }
 
 function hideGameLoading() {
   const overlay = $('gameLoadingOverlay');
   if (!overlay) return;
 
+  stopGameLoadingAuto();
+  cancelGameLoadingAnimation();
   overlay.classList.remove('show');
   overlay.setAttribute('aria-hidden', 'true');
 }
+
 
 async function preloadLevelAudiosWithProgress() {
   const ids = [...new Set(
