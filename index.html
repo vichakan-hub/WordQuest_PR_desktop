@@ -154,6 +154,59 @@ button { font-family: "Sarabun", sans-serif; }
 .play-button:hover { transform: translateY(-2px); filter: brightness(1.04); }
 .play-button:active { transform: translateY(5px); box-shadow: 0 3px 0 #760070, 0 9px 18px rgba(90,0,90,.22); }
 
+.play-button:disabled {
+  cursor: not-allowed;
+  opacity: .72;
+  filter: grayscale(.25);
+  transform: none !important;
+  box-shadow: 0 5px 0 #760070, 0 12px 24px rgba(90, 0, 90, .18);
+}
+.home-load-status {
+  width: 320px;
+  height: 76px;
+  padding: 0 22px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(236, 253, 255, .82);
+  border: 1px solid rgba(255,255,255,.72);
+  box-shadow: 0 8px 0 rgba(11, 78, 122, .18), 0 17px 30px rgba(15,23,42,.12);
+}
+.home-load-text {
+  display: none;
+  width: 100%;
+  text-align: center;
+  font-size: .82rem;
+  line-height: 1.2;
+  font-weight: 900;
+  color: #b91c1c;
+  margin-bottom: 7px;
+}
+.home-load-bar {
+  width: 100%;
+  height: 18px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(191, 219, 254, .95);
+  box-shadow: inset 0 1px 3px rgba(15,23,42,.12);
+  overflow: hidden;
+}
+.home-load-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #38bdf8, #6366f1);
+  transition: width .25s ease;
+}
+.home-load-status.error {
+  height: auto;
+  min-height: 76px;
+  padding: 10px 16px 12px;
+}
+.home-load-status.error .home-load-text { display: block; }
+.home-load-status.error .home-load-bar-fill { background: linear-gradient(90deg, #f97316, #ef4444); }
 .home-hint {
   min-width: 270px;
   padding: 8px 18px;
@@ -375,7 +428,11 @@ button { font-family: "Sarabun", sans-serif; }
           </div>
         </div>
 
-        <button class="play-button" type="button" id="startBtn">เริ่มเกม!</button>
+        <button class="play-button" type="button" id="startBtn" style="display:none;">เริ่มเกม!</button>
+        <div class="home-load-status" id="homeLoadStatus" aria-label="กำลังโหลดข้อมูลด่าน">
+          <div class="home-load-text" id="homeLoadText"></div>
+          <div class="home-load-bar"><div class="home-load-bar-fill" id="homeLoadBarFill"></div></div>
+        </div>
         <div class="home-hint">ฟังเสียง เลือกคำ พิชิตทุกด่าน</div>
       </div>
     </section>
@@ -493,6 +550,7 @@ let isAnswering = false;
 let currentAudio = null;
 let audioDataUrlCache = {};
 let audioLoadingMap = {};
+let levelsReady = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -502,6 +560,7 @@ function init() {
   setupLogoFallbacks();
   getDeviceId();
   bindEvents();
+  setHomeLoading(8, '', 'loading');
   loadLevels();
 }
 
@@ -527,6 +586,11 @@ function showScreen(id) {
 }
 
 function enterLevelScreen() {
+  if (!levelsReady || !levels.length) {
+    toast('กำลังโหลดข้อมูลด่าน กรุณารอสักครู่');
+    return;
+  }
+
   showScreen('levelScreen');
   renderLevels();
 }
@@ -567,15 +631,35 @@ function saveProgress(progress) {
 }
 
 async function loadLevels() {
+  levelsReady = false;
+  $('startBtn').disabled = true;
+  $('startBtn').style.display = 'none';
+
   setLevelStatus('กำลังโหลด Level จริงจาก Google Sheet...');
+  setHomeLoading(18, '', 'loading');
 
   try {
+    setHomeLoading(45, '', 'loading');
     levels = await apiGetLevels();
+
     renderLevels();
+    levelsReady = true;
+
+    $('startBtn').disabled = false;
+    $('startBtn').textContent = 'เริ่มเกม!';
+
+    setHomeLoading(100, '', 'ready');
   } catch (err) {
     console.error(err);
     levels = [];
-    setLevelStatus('โหลดข้อมูลจริงไม่สำเร็จ: ' + (err.message || err));
+    levelsReady = false;
+
+    $('startBtn').disabled = true;
+    $('startBtn').style.display = 'none';
+
+    const message = 'โหลดข้อมูลด่านไม่สำเร็จ: ' + (err.message || err);
+    setLevelStatus(message);
+    setHomeLoading(100, message, 'error');
   }
 }
 
@@ -632,6 +716,43 @@ async function apiSaveResult(payload) {
   });
 
   return { success: true };
+}
+
+function setHomeLoading(percent, text, state = 'loading') {
+  const status = $('homeLoadStatus');
+  const label = $('homeLoadText');
+  const fill = $('homeLoadBarFill');
+  const startBtn = $('startBtn');
+
+  if (!status || !label || !fill || !startBtn) return;
+
+  const value = Math.max(0, Math.min(100, Math.round(Number(percent || 0))));
+
+  status.classList.remove('ready', 'error');
+  fill.style.width = value + '%';
+
+  if (state === 'ready') {
+    status.style.display = 'none';
+    startBtn.style.display = 'inline-flex';
+    startBtn.disabled = false;
+    startBtn.textContent = 'เริ่มเกม!';
+    label.textContent = '';
+    return;
+  }
+
+  if (state === 'error') {
+    status.style.display = 'flex';
+    status.classList.add('error');
+    startBtn.style.display = 'none';
+    startBtn.disabled = true;
+    label.textContent = text || 'โหลดข้อมูลด่านไม่สำเร็จ';
+    return;
+  }
+
+  status.style.display = 'flex';
+  startBtn.style.display = 'none';
+  startBtn.disabled = true;
+  label.textContent = '';
 }
 
 function setLevelStatus(text) {
