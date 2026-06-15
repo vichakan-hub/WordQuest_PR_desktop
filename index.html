@@ -615,12 +615,17 @@ async function startLevel(level) {
   $('answerZone').innerHTML = '<span class="placeholder">เลือกการ์ดคำตอบ</span>';
 
   try {
-    questions = await apiGetQuestions(level.id);
-    if (!questions.length) {
-      setFeedback('ยังไม่มีข้อฝึกในด่านนี้', 'bad');
-      return;
-    }
-    renderQuestion();
+questions = await apiGetQuestions(level.id);
+
+if (!questions.length) {
+  setFeedback('ยังไม่มีข้อฝึกในด่านนี้', 'bad');
+  return;
+}
+
+// โหลดเสียงทั้งด่านล่วงหน้าทันทีหลังเลือก Level
+preloadLevelAudios();
+
+renderQuestion();
   } catch (err) {
     setFeedback('โหลดข้อฝึกไม่สำเร็จ: ' + (err.message || err), 'bad');
   }
@@ -743,6 +748,45 @@ async function preloadCurrentAudio() {
     });
 
   return audioLoadingMap[fileId];
+}
+
+    function preloadLevelAudios() {
+  const ids = [...new Set(
+    questions
+      .map(q => String(q.audioFileId || '').trim())
+      .filter(Boolean)
+  )];
+
+  if (!ids.length) {
+    console.log('Level นี้ไม่มี audioFileId');
+    return;
+  }
+
+  toast('กำลังเตรียมเสียงของด่านนี้...');
+
+  ids.forEach(fileId => {
+    if (audioDataUrlCache[fileId] || audioLoadingMap[fileId]) {
+      return;
+    }
+
+    audioLoadingMap[fileId] = gasJsonp('audio', { fileId })
+      .then(res => {
+        if (res && res.audioDataUrl) {
+          audioDataUrlCache[fileId] = res.audioDataUrl;
+          console.log('โหลดเสียงสำเร็จ:', fileId);
+          return res.audioDataUrl;
+        }
+
+        throw new Error(res && res.message ? res.message : 'ไม่พบข้อมูลเสียง');
+      })
+      .catch(err => {
+        console.warn('โหลดเสียงไม่สำเร็จ:', fileId, err);
+        return '';
+      })
+      .finally(() => {
+        delete audioLoadingMap[fileId];
+      });
+  });
 }
 
 async function playPromptSound() {
