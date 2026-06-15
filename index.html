@@ -384,45 +384,10 @@ button { font-family: "Sarabun", sans-serif; }
 
   <script>
 // =========================================================
-// WORD QUEST CONFIG
-// ขั้นแรก GitHub ใช้ข้อมูลตัวอย่างก่อน
-// ขั้นต่อไปค่อยเปลี่ยนให้ดึงจาก Supabase
+// WORD QUEST CONFIG - GitHub เชื่อม Google Sheet + Google Drive ผ่าน Apps Script
 // =========================================================
 
-const APP_CONFIG = {
-  useSupabase: false,
-  supabaseUrl: '',
-  supabaseAnonKey: ''
-};
-
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxBUe1en1p7EzMwV0hN4loqXfmo29PON7DaaEmTcoIeKTXqy82zmBVije0usimVc3lO/exec';
-
-const SAMPLE_LEVELS = [
-  { id: 'lv1', level_no: 1, level_name: 'พยัญชนะ ชุดที่ 1', description: 'ก ข ค ง' },
-  { id: 'lv2', level_no: 2, level_name: 'พยัญชนะ ชุดที่ 2', description: 'จ ฉ ช ซ' },
-  { id: 'lv3', level_no: 3, level_name: 'พยัญชนะ ชุดที่ 3', description: 'ด ต ถ ท' },
-  { id: 'lv4', level_no: 4, level_name: 'พยัญชนะ ชุดที่ 4', description: 'บ ป ผ ฝ' },
-  { id: 'lv5', level_no: 5, level_name: 'พยัญชนะ ชุดที่ 5', description: 'ม ย ร ล' },
-  { id: 'lv6', level_no: 6, level_name: 'แม่ ก กา ชุดที่ 1', description: 'คำง่าย' },
-  { id: 'lv7', level_no: 7, level_name: 'แม่ ก กา ชุดที่ 2', description: 'คำง่าย' },
-  { id: 'lv8', level_no: 8, level_name: 'แม่ ก กา ชุดที่ 3', description: 'คำง่าย' },
-  { id: 'lv9', level_no: 9, level_name: 'แม่ ก กา ชุดที่ 4', description: 'คำง่าย' },
-  { id: 'lv10', level_no: 10, level_name: 'แม่ ก กา ชุดที่ 5', description: 'คำง่าย' }
-];
-
-const SAMPLE_QUESTIONS = {
-  lv1: [
-    { id: 'q1', prompt: 'กอ ไก่', answer: 'ก', choices: ['ก','ข','ค','ง'], audio_url: '' },
-    { id: 'q2', prompt: 'ขอ ไข่', answer: 'ข', choices: ['ก','ข','ค','ง'], audio_url: '' },
-    { id: 'q3', prompt: 'คอ ควาย', answer: 'ค', choices: ['ก','ข','ค','ง'], audio_url: '' },
-    { id: 'q4', prompt: 'งอ งู', answer: 'ง', choices: ['ก','ข','ค','ง'], audio_url: '' }
-  ],
-  lv2: [
-    { id: 'q5', prompt: 'จอ จาน', answer: 'จ', choices: ['จ','ฉ','ช','ซ'], audio_url: '' },
-    { id: 'q6', prompt: 'ฉอ ฉิ่ง', answer: 'ฉ', choices: ['จ','ฉ','ช','ซ'], audio_url: '' }
-  ]
-};
-
 
 const STORAGE_KEY = 'WORD_QUEST_PROGRESS_GITHUB_V1';
 const DEVICE_KEY = 'WORD_QUEST_DEVICE_ID';
@@ -509,15 +474,26 @@ function saveProgress(progress) {
 }
 
 async function loadLevels() {
-  setLevelStatus('กำลังโหลด Level...');
-  levels = await apiGetLevels();
-  renderLevels();
+  setLevelStatus('กำลังโหลด Level จริงจาก Google Sheet...');
+
+  try {
+    levels = await apiGetLevels();
+    renderLevels();
+  } catch (err) {
+    console.error(err);
+    levels = [];
+    setLevelStatus('โหลดข้อมูลจริงไม่สำเร็จ: ' + (err.message || err));
+  }
 }
 
 async function apiGetLevels() {
   const rows = await gasJsonp('levels');
 
-  return (rows || []).map(level => ({
+  if (!Array.isArray(rows)) {
+    throw new Error(rows && rows.message ? rows.message : 'ข้อมูล Level ที่ได้กลับมาไม่ถูกต้อง');
+  }
+
+  return rows.map(level => ({
     id: level.levelId,
     level_no: Number(level.levelNo || 0),
     level_name: level.levelName || '',
@@ -526,11 +502,13 @@ async function apiGetLevels() {
 }
 
 async function apiGetQuestions(levelId) {
-  const rows = await gasJsonp('questions', {
-    levelId: levelId
-  });
+  const rows = await gasJsonp('questions', { levelId: levelId });
 
-  return (rows || []).map(q => ({
+  if (!Array.isArray(rows)) {
+    throw new Error(rows && rows.message ? rows.message : 'ข้อมูลข้อฝึกที่ได้กลับมาไม่ถูกต้อง');
+  }
+
+  return rows.map(q => ({
     id: q.questionId,
     level_id: q.levelId,
     prompt: q.prompt || '',
@@ -830,14 +808,25 @@ function shuffle(arr) {
   return arr;
 }
 
-    function gasJsonp(api, params = {}) {
+function gasJsonp(api, params = {}) {
   return new Promise((resolve, reject) => {
     const callbackName = 'gas_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('เชื่อมต่อ Apps Script นานเกินไป'));
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[callbackName];
+      if (script.parentNode) script.remove();
+    }
 
     window[callbackName] = function(data) {
+      cleanup();
       resolve(data);
-      delete window[callbackName];
-      script.remove();
     };
 
     const url = new URL(GAS_API_URL);
@@ -848,17 +837,16 @@ function shuffle(arr) {
       url.searchParams.set(key, params[key]);
     });
 
-    const script = document.createElement('script');
     script.src = url.toString();
     script.onerror = function() {
+      cleanup();
       reject(new Error('โหลดข้อมูลจาก Apps Script ไม่สำเร็จ'));
-      delete window[callbackName];
-      script.remove();
     };
 
     document.body.appendChild(script);
   });
 }
+
 
   </script>
 </body>
