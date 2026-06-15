@@ -553,6 +553,7 @@ button { font-family: "Sarabun", sans-serif; }
 
 <div class="toast" id="toast">พร้อมใช้งาน</div>
 <audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
+<audio id="clickSfxAudio" src="assets/CLICK3.WAV" preload="auto"></audio>
 <button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
 
 
@@ -601,6 +602,7 @@ function init() {
   setupLogoFallbacks();
   getDeviceId();
   bindEvents();
+  setupClickSfx();
   updateBgmButton();
   setHomeLoading(8, '', 'loading');
   loadLevels();
@@ -637,6 +639,29 @@ function startBgm() {
 
   bgm.play().catch(err => {
     console.warn('BGM play blocked or failed:', err);
+  });
+}
+
+    function setupClickSfx() {
+  document.addEventListener('click', function(event) {
+    const btn = event.target.closest('button');
+
+    if (!btn || btn.disabled) return;
+
+    playClickSfx();
+  }, true);
+}
+
+function playClickSfx() {
+  const base = $('clickSfxAudio');
+  if (!base) return;
+
+  const sound = new Audio(base.currentSrc || base.src);
+  sound.volume = 0.45;
+  sound.currentTime = 0;
+
+  sound.play().catch(err => {
+    console.warn('click sound failed:', err);
   });
 }
 
