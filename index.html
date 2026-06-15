@@ -857,11 +857,15 @@ function startBgm() {
   });
 }
 
-    function setupClickSfx() {
+function setupClickSfx() {
   document.addEventListener('click', function(event) {
     const btn = event.target.closest('button');
 
     if (!btn || btn.disabled) return;
+
+    // ปุ่มคำตอบให้เสียง feedback ถูก/ผิด ทำงานเอง
+    // กันไม่ให้ CLICK3.WAV แย่งสิทธิ์เสียงกับ "เก่งมากค่ะ"
+    if (btn.classList.contains('letter-card')) return;
 
     playClickSfx();
   }, true);
@@ -880,27 +884,47 @@ function playClickSfx() {
   });
 }
 
+let correctVoicePlayer = null;
+
 function playCorrectVoice() {
   const voice = $('correctVoiceAudio');
 
-  duckBgmTemporarily(1400);
+  duckBgmTemporarily(1800);
 
-  // ถ้าไม่มีไฟล์เสียง หรือโหลดไม่ได้ จะใช้เสียงสังเคราะห์แทน
   if (!voice) {
     speakThai('เก่งมากค่ะ');
     return;
   }
 
-  try {
-    voice.pause();
-    voice.currentTime = 0;
-    voice.volume = 1;
+  const src = voice.currentSrc || voice.getAttribute('src') || voice.src;
 
-    const playPromise = voice.play();
+  if (!src) {
+    speakThai('เก่งมากค่ะ');
+    return;
+  }
+
+  try {
+    if (correctVoicePlayer) {
+      correctVoicePlayer.pause();
+      correctVoicePlayer.currentTime = 0;
+    }
+
+    correctVoicePlayer = new Audio(src);
+    correctVoicePlayer.volume = 1;
+    correctVoicePlayer.preload = 'auto';
+
+    correctVoicePlayer.addEventListener('error', () => {
+      console.warn('correct voice file error:', src);
+      toast('ไม่พบไฟล์เสียงเก่งมากค่ะ ตรวจชื่อไฟล์ใน assets');
+      speakThai('เก่งมากค่ะ');
+    }, { once: true });
+
+    const playPromise = correctVoicePlayer.play();
 
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(err => {
         console.warn('correct voice failed:', err);
+        toast('เสียงเก่งมากค่ะยังเล่นไม่ได้');
         speakThai('เก่งมากค่ะ');
       });
     }
