@@ -496,6 +496,155 @@ button { font-family: "Sarabun", sans-serif; }
   color: #1d4ed8;
 }
 
+    .correct-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(250, 204, 21, .24), transparent 32%),
+    rgba(15, 23, 42, .38);
+  backdrop-filter: blur(10px);
+}
+
+.correct-overlay.show {
+  display: flex;
+  animation: correctFadeIn .18s ease both;
+}
+
+@keyframes correctFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.correct-card {
+  width: min(430px, 92vw);
+  border-radius: 34px;
+  padding: 30px 26px 28px;
+  text-align: center;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, .9), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(236, 253, 255, .94));
+  border: 3px solid rgba(255, 255, 255, .88);
+  box-shadow:
+    0 28px 70px rgba(15, 23, 42, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .9);
+  animation: correctPop .26s cubic-bezier(.2, 1.35, .35, 1) both;
+}
+
+@keyframes correctPop {
+  from {
+    transform: translateY(18px) scale(.86);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.correct-badge {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 12px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.8rem;
+  background: linear-gradient(145deg, #fef3c7, #facc15);
+  box-shadow:
+    0 10px 0 #d9a600,
+    0 18px 28px rgba(250, 204, 21, .26);
+  animation: correctBadgeBounce 1s ease-in-out infinite;
+}
+
+@keyframes correctBadgeBounce {
+  0%, 100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(3deg);
+  }
+}
+
+.correct-title {
+  margin: 8px 0 6px;
+  font-size: 2.15rem;
+  line-height: 1.1;
+  font-weight: 900;
+  color: #15803d;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .9);
+}
+
+.correct-text {
+  margin: 0 0 20px;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  font-weight: 900;
+  color: #315777;
+}
+
+.correct-next-btn {
+  width: min(260px, 100%);
+  height: 62px;
+  border: 0;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+  box-shadow:
+    0 8px 0 #15803d,
+    0 16px 26px rgba(22, 163, 74, .26);
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+}
+
+.correct-next-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.correct-next-btn:active {
+  transform: translateY(5px);
+  box-shadow:
+    0 3px 0 #15803d,
+    0 8px 18px rgba(22, 163, 74, .22);
+}
+
+@media (max-width: 560px) {
+  .correct-card {
+    padding: 26px 20px 24px;
+    border-radius: 30px;
+  }
+
+  .correct-badge {
+    width: 82px;
+    height: 82px;
+    font-size: 3.3rem;
+    border-radius: 26px;
+  }
+
+  .correct-title {
+    font-size: 1.85rem;
+  }
+
+  .correct-next-btn {
+    height: 58px;
+    font-size: 1.2rem;
+  }
+}
+
 
 
 
@@ -610,6 +759,17 @@ button { font-family: "Sarabun", sans-serif; }
 <audio id="correctVoiceAudio" src="assets/kengmakka.MP3" preload="auto"></audio>
 <button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
 
+  <div class="correct-overlay" id="correctOverlay" aria-hidden="true">
+  <div class="correct-card" role="dialog" aria-modal="true" aria-labelledby="correctTitle">
+    <div class="correct-badge">⭐</div>
+    <h2 class="correct-title" id="correctTitle">เก่งมากค่ะ!</h2>
+    <p class="correct-text" id="correctText">ตอบถูกต้อง</p>
+
+    <button class="correct-next-btn" type="button" id="correctNextBtn">
+      ข้อต่อไป
+    </button>
+  </div>
+</div>
 
   <div class="loading-overlay" id="gameLoadingOverlay" aria-hidden="true">
     <div class="loading-card" role="status" aria-live="polite">
@@ -677,6 +837,7 @@ function bindEvents() {
   $('continueBtn').addEventListener('click', backToLevels);
   $('restartBtn').addEventListener('click', restartCurrentLevel);
   $('bgmToggleBtn').addEventListener('click', toggleBgm);
+  $('correctNextBtn').addEventListener('click', goNextAfterCorrect);
 }
 
 function showScreen(id) {
@@ -1125,6 +1286,51 @@ function parseChoices(value) {
   return String(value || '').split(',').map(x => x.trim()).filter(Boolean);
 }
 
+    function showCorrectOverlay() {
+  const overlay = $('correctOverlay');
+  const text = $('correctText');
+  const btn = $('correctNextBtn');
+
+  if (!overlay || !btn) return;
+
+  const isLastQuestion = currentIndex >= questions.length - 1;
+
+  if (text) {
+    text.textContent = isLastQuestion
+      ? 'ผ่านข้อสุดท้ายแล้ว ไปดูสรุปผลกันเลย'
+      : `ข้อที่ ${currentIndex + 1} ถูกต้อง`;
+  }
+
+  btn.textContent = isLastQuestion ? 'ดูสรุปผล' : 'ข้อต่อไป';
+
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+
+  setTimeout(() => {
+    btn.focus();
+  }, 80);
+}
+
+function hideCorrectOverlay() {
+  const overlay = $('correctOverlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function goNextAfterCorrect() {
+  hideCorrectOverlay();
+
+  currentIndex += 1;
+
+  if (currentIndex >= questions.length) {
+    finishLevel();
+  } else {
+    renderQuestion();
+  }
+}
+
 function answerQuestion(button, choice) {
   if (isAnswering) return;
   isAnswering = true;
@@ -1135,27 +1341,41 @@ function answerQuestion(button, choice) {
 
   $('answerZone').textContent = choice;
 
-if (correct) {
-  score += 1;
-  button.classList.add('correct');
-  setFeedback('ถูกต้อง เก่งมาก! ⭐', 'good');
-  playCorrectVoice();
-} else {
+  if (correct) {
+    score += 1;
+    button.classList.add('correct');
+    setFeedback('ถูกต้อง เก่งมาก! ⭐', 'good');
+    playCorrectVoice();
+  } else {
     button.classList.add('wrong');
     setFeedback(`ยังไม่ถูก คำตอบคือ ${q.answer}`, 'bad');
     highlightCorrect(q.answer);
   }
 
-  details.push({ questionId: q.id || '', prompt: q.prompt || '', answer: q.answer || '', selected: choice, correct });
+  details.push({
+    questionId: q.id || '',
+    prompt: q.prompt || '',
+    answer: q.answer || '',
+    selected: choice,
+    correct
+  });
+
   updateHud();
+
+  if (correct) {
+    showCorrectOverlay();
+    return;
+  }
 
   setTimeout(() => {
     currentIndex += 1;
-    if (currentIndex >= questions.length) finishLevel();
-    else {
+
+    if (currentIndex >= questions.length) {
+      finishLevel();
+    } else {
       renderQuestion();
     }
-  }, correct ? 1150 : 1200);
+  }, 1200);
 }
 
 function highlightCorrect(answer) {
