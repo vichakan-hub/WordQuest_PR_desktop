@@ -279,6 +279,86 @@ button { font-family: "Sarabun", sans-serif; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 999px; background: rgba(15,23,42,.88); color: white; font-weight: 900; z-index: 999; transition: .18s ease; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .34);
+  backdrop-filter: blur(10px);
+}
+.loading-overlay.show {
+  display: flex;
+}
+.loading-card {
+  width: min(520px, 92vw);
+  border-radius: 34px;
+  padding: 30px 34px 28px;
+  text-align: center;
+  color: var(--text);
+  background: rgba(255, 255, 255, .94);
+  border: 2px solid rgba(255, 255, 255, .82);
+  box-shadow: 0 26px 70px rgba(15, 23, 42, .28);
+}
+.loading-icon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 12px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  background: linear-gradient(135deg, #dbeafe, #cffafe);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 10px 24px rgba(14,165,233,.18);
+  animation: loadingPulse 1.15s ease-in-out infinite;
+}
+@keyframes loadingPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+.loading-title {
+  font-size: 1.75rem;
+  line-height: 1.15;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.loading-text {
+  min-height: 28px;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 900;
+  color: #42627d;
+  margin-bottom: 18px;
+}
+.loading-bar {
+  width: 100%;
+  height: 20px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #dbeafe;
+  box-shadow: inset 0 2px 5px rgba(15, 23, 42, .12);
+  overflow: hidden;
+}
+.loading-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #38bdf8, #6366f1);
+  transition: width .22s ease;
+}
+.loading-percent {
+  margin-top: 10px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #1d4ed8;
+}
+
+
   </style>
 </head>
 <body>
@@ -382,12 +462,23 @@ button { font-family: "Sarabun", sans-serif; }
 
   <div class="toast" id="toast">พร้อมใช้งาน</div>
 
+
+  <div class="loading-overlay" id="gameLoadingOverlay" aria-hidden="true">
+    <div class="loading-card" role="status" aria-live="polite">
+      <div class="loading-icon">🔊</div>
+      <div class="loading-title">กำลังโหลดข้อมูลเกม</div>
+      <div class="loading-text" id="loadingText">กำลังเตรียมข้อมูล...</div>
+      <div class="loading-bar"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+      <div class="loading-percent" id="loadingPercent">0%</div>
+    </div>
+  </div>
+
   <script>
 // =========================================================
 // WORD QUEST CONFIG - GitHub เชื่อม Google Sheet + Google Drive ผ่าน Apps Script
 // =========================================================
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbykPnlgx_y0OfbLUbXNce0afd7e0tSOKYkTNB1-wZclZIDbNJIa74MerIKwT50ZTg/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxBUe1en1p7EzMwV0hN4loqXfmo29PON7DaaEmTcoIeKTXqy82zmBVije0usimVc3lO/exec';
 
 const STORAGE_KEY = 'WORD_QUEST_PROGRESS_GITHUB_V1';
 const DEVICE_KEY = 'WORD_QUEST_DEVICE_ID';
@@ -610,23 +701,29 @@ async function startLevel(level) {
 
   showScreen('gameScreen');
   updateHud();
-  setFeedback('กำลังโหลดข้อฝึก...', '');
+  setFeedback('', '');
   $('letterGrid').innerHTML = '';
   $('answerZone').innerHTML = '<span class="placeholder">เลือกการ์ดคำตอบ</span>';
 
+  showGameLoading('กำลังโหลดข้อฝึก...', 8);
+
   try {
-questions = await apiGetQuestions(level.id);
+    questions = await apiGetQuestions(level.id);
 
-if (!questions.length) {
-  setFeedback('ยังไม่มีข้อฝึกในด่านนี้', 'bad');
-  return;
-}
+    if (!questions.length) {
+      hideGameLoading();
+      setFeedback('ยังไม่มีข้อฝึกในด่านนี้', 'bad');
+      return;
+    }
 
-// โหลดเสียงทั้งด่านล่วงหน้าทันทีหลังเลือก Level
-preloadLevelAudios();
+    updateGameLoading(20, 'กำลังเตรียมเสียงของด่านนี้...');
+    await preloadLevelAudiosWithProgress();
 
-renderQuestion();
+    renderQuestion();
+    updateGameLoading(100, 'พร้อมเล่นแล้ว!');
+    setTimeout(hideGameLoading, 250);
   } catch (err) {
+    hideGameLoading();
     setFeedback('โหลดข้อฝึกไม่สำเร็จ: ' + (err.message || err), 'bad');
   }
 }
@@ -716,11 +813,80 @@ function setFeedback(text, type) {
   if (type === 'bad') el.classList.add('bad');
 }
 
-async function preloadCurrentAudio() {
-  const q = questions[currentIndex];
-  if (!q || !q.audioFileId) return '';
+function showGameLoading(text = 'กำลังโหลดข้อมูลเกม', percent = 0) {
+  const overlay = $('gameLoadingOverlay');
+  if (!overlay) return;
 
-  const fileId = String(q.audioFileId || '').trim();
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+  updateGameLoading(percent, text);
+}
+
+function updateGameLoading(percent, text) {
+  const fill = $('loadingBarFill');
+  const label = $('loadingText');
+  const percentLabel = $('loadingPercent');
+
+  const value = Math.max(0, Math.min(100, Math.round(Number(percent || 0))));
+
+  if (fill) fill.style.width = value + '%';
+  if (label && text) label.textContent = text;
+  if (percentLabel) percentLabel.textContent = value + '%';
+}
+
+function hideGameLoading() {
+  const overlay = $('gameLoadingOverlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+async function preloadLevelAudiosWithProgress() {
+  const ids = [...new Set(
+    questions
+      .map(q => String(q.audioFileId || '').trim())
+      .filter(Boolean)
+  )];
+
+  if (!ids.length) {
+    updateGameLoading(100, 'ไม่มีไฟล์เสียงในด่านนี้ ใช้เสียงสังเคราะห์แทน');
+    return;
+  }
+
+  let done = 0;
+  const total = ids.length;
+
+  const updateProgress = () => {
+    const percent = 20 + (done / total) * 80;
+    updateGameLoading(percent, `กำลังโหลดเสียง ${done} / ${total}`);
+  };
+
+  updateProgress();
+
+  await Promise.all(ids.map(async fileId => {
+    if (audioDataUrlCache[fileId]) {
+      done += 1;
+      updateProgress();
+      return;
+    }
+
+    try {
+      const dataUrl = await preloadAudioByFileId(fileId);
+      if (!dataUrl) {
+        console.warn('โหลดเสียงไม่สำเร็จหรือไม่มีข้อมูลเสียง:', fileId);
+      }
+    } catch (err) {
+      console.warn('โหลดเสียงไม่สำเร็จ:', fileId, err);
+    } finally {
+      done += 1;
+      updateProgress();
+    }
+  }));
+}
+
+async function preloadAudioByFileId(fileId) {
+  fileId = String(fileId || '').trim();
   if (!fileId) return '';
 
   if (audioDataUrlCache[fileId]) {
@@ -740,7 +906,7 @@ async function preloadCurrentAudio() {
       throw new Error(res && res.message ? res.message : 'ไม่พบข้อมูลเสียง');
     })
     .catch(err => {
-      console.warn('preload audio failed', err);
+      console.warn('preload audio failed', fileId, err);
       return '';
     })
     .finally(() => {
@@ -750,43 +916,10 @@ async function preloadCurrentAudio() {
   return audioLoadingMap[fileId];
 }
 
-    function preloadLevelAudios() {
-  const ids = [...new Set(
-    questions
-      .map(q => String(q.audioFileId || '').trim())
-      .filter(Boolean)
-  )];
-
-  if (!ids.length) {
-    console.log('Level นี้ไม่มี audioFileId');
-    return;
-  }
-
-  toast('กำลังเตรียมเสียงของด่านนี้...');
-
-  ids.forEach(fileId => {
-    if (audioDataUrlCache[fileId] || audioLoadingMap[fileId]) {
-      return;
-    }
-
-    audioLoadingMap[fileId] = gasJsonp('audio', { fileId })
-      .then(res => {
-        if (res && res.audioDataUrl) {
-          audioDataUrlCache[fileId] = res.audioDataUrl;
-          console.log('โหลดเสียงสำเร็จ:', fileId);
-          return res.audioDataUrl;
-        }
-
-        throw new Error(res && res.message ? res.message : 'ไม่พบข้อมูลเสียง');
-      })
-      .catch(err => {
-        console.warn('โหลดเสียงไม่สำเร็จ:', fileId, err);
-        return '';
-      })
-      .finally(() => {
-        delete audioLoadingMap[fileId];
-      });
-  });
+async function preloadCurrentAudio() {
+  const q = questions[currentIndex];
+  if (!q || !q.audioFileId) return '';
+  return preloadAudioByFileId(q.audioFileId);
 }
 
 async function playPromptSound() {
