@@ -551,8 +551,9 @@ button { font-family: "Sarabun", sans-serif; }
 
   </main>
 
-  <div class="toast" id="toast">พร้อมใช้งาน</div>
-  <audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
+<div class="toast" id="toast">พร้อมใช้งาน</div>
+<audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
+<button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
 
 
   <div class="loading-overlay" id="gameLoadingOverlay" aria-hidden="true">
@@ -574,6 +575,7 @@ const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbykPnlgx_y0OfbLUbXN
 
 const STORAGE_KEY = 'WORD_QUEST_PROGRESS_GITHUB_V1';
 const DEVICE_KEY = 'WORD_QUEST_DEVICE_ID';
+const BGM_SETTING_KEY = 'WORD_QUEST_BGM_ON';
 
 let levels = [];
 let questions = [];
@@ -590,7 +592,7 @@ let gameLoadingShownPercent = 0;
 let gameLoadingTargetPercent = 0;
 let gameLoadingAnimFrame = null;
 let gameLoadingAutoTimer = null;
-
+let bgmEnabled = localStorage.getItem(BGM_SETTING_KEY) !== 'off';
 const $ = (id) => document.getElementById(id);
 
 window.addEventListener('DOMContentLoaded', init);
@@ -599,6 +601,7 @@ function init() {
   setupLogoFallbacks();
   getDeviceId();
   bindEvents();
+  updateBgmButton();
   setHomeLoading(8, '', 'loading');
   loadLevels();
 }
@@ -617,6 +620,7 @@ function bindEvents() {
   $('soundBtn').addEventListener('click', playPromptSound);
   $('continueBtn').addEventListener('click', backToLevels);
   $('restartBtn').addEventListener('click', restartCurrentLevel);
+  $('bgmToggleBtn').addEventListener('click', toggleBgm);
 }
 
 function showScreen(id) {
@@ -626,7 +630,7 @@ function showScreen(id) {
 
 function startBgm() {
   const bgm = $('bgmAudio');
-  if (!bgm) return;
+  if (!bgm || !bgmEnabled) return;
 
   bgm.volume = 0.24;
   bgm.loop = true;
@@ -634,6 +638,35 @@ function startBgm() {
   bgm.play().catch(err => {
     console.warn('BGM play blocked or failed:', err);
   });
+}
+
+function stopBgm() {
+  const bgm = $('bgmAudio');
+  if (!bgm) return;
+
+  bgm.pause();
+}
+
+function toggleBgm() {
+  bgmEnabled = !bgmEnabled;
+  localStorage.setItem(BGM_SETTING_KEY, bgmEnabled ? 'on' : 'off');
+
+  if (bgmEnabled) {
+    startBgm();
+  } else {
+    stopBgm();
+  }
+
+  updateBgmButton();
+}
+
+function updateBgmButton() {
+  const btn = $('bgmToggleBtn');
+  if (!btn) return;
+
+  btn.textContent = bgmEnabled ? '🎵' : '🔇';
+  btn.classList.toggle('off', !bgmEnabled);
+  btn.setAttribute('aria-label', bgmEnabled ? 'ปิดเพลงพื้นหลัง' : 'เปิดเพลงพื้นหลัง');
 }
 
 function enterLevelScreen() {
