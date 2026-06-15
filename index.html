@@ -552,6 +552,7 @@ button { font-family: "Sarabun", sans-serif; }
   </main>
 
   <div class="toast" id="toast">พร้อมใช้งาน</div>
+  <audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
 
 
   <div class="loading-overlay" id="gameLoadingOverlay" aria-hidden="true">
@@ -623,12 +624,25 @@ function showScreen(id) {
   $(id).classList.add('active');
 }
 
+function startBgm() {
+  const bgm = $('bgmAudio');
+  if (!bgm) return;
+
+  bgm.volume = 0.24;
+  bgm.loop = true;
+
+  bgm.play().catch(err => {
+    console.warn('BGM play blocked or failed:', err);
+  });
+}
+
 function enterLevelScreen() {
   if (!levelsReady || !levels.length) {
     toast('กำลังโหลดข้อมูลด่าน กรุณารอสักครู่');
     return;
   }
 
+  startBgm();
   showScreen('levelScreen');
   renderLevels();
 }
