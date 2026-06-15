@@ -194,11 +194,45 @@ button { font-family: "Sarabun", sans-serif; }
   overflow: hidden;
 }
 .home-load-bar-fill {
+  position: relative;
   width: 0%;
   height: 100%;
   border-radius: 999px;
+  overflow: hidden;
   background: linear-gradient(90deg, #22c55e, #38bdf8, #6366f1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 0 14px rgba(56,189,248,.38);
   transition: width .25s ease;
+}
+
+.home-load-bar-fill::after,
+.loading-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,.42) 0,
+    rgba(255,255,255,.42) 8px,
+    rgba(255,255,255,.10) 8px,
+    rgba(255,255,255,.10) 16px
+  );
+  background-size: 34px 34px;
+  animation: candyStripeMove .55s linear infinite;
+}
+.home-load-bar-fill::before,
+.loading-bar-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0) 55%);
+  z-index: 1;
+  pointer-events: none;
+}
+@keyframes candyStripeMove {
+  from { background-position: 0 0; }
+  to { background-position: 34px 0; }
 }
 .home-load-status.error {
   height: auto;
@@ -398,10 +432,13 @@ button { font-family: "Sarabun", sans-serif; }
   overflow: hidden;
 }
 .loading-bar-fill {
+  position: relative;
   width: 0%;
   height: 100%;
   border-radius: 999px;
+  overflow: hidden;
   background: linear-gradient(90deg, #22c55e, #38bdf8, #6366f1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 0 14px rgba(56,189,248,.38);
   transition: width .22s ease;
 }
 .loading-percent {
