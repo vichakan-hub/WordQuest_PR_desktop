@@ -395,6 +395,8 @@ const APP_CONFIG = {
   supabaseAnonKey: ''
 };
 
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxBUe1en1p7EzMwV0hN4loqXfmo29PON7DaaEmTcoIeKTXqy82zmBVije0usimVc3lO/exec';
+
 const SAMPLE_LEVELS = [
   { id: 'lv1', level_no: 1, level_name: 'พยัญชนะ ชุดที่ 1', description: 'ก ข ค ง' },
   { id: 'lv2', level_no: 2, level_name: 'พยัญชนะ ชุดที่ 2', description: 'จ ฉ ช ซ' },
@@ -513,28 +515,56 @@ async function loadLevels() {
 }
 
 async function apiGetLevels() {
-  if (!APP_CONFIG.useSupabase) {
-    return SAMPLE_LEVELS.slice().sort((a, b) => Number(a.level_no) - Number(b.level_no));
-  }
+  const rows = await gasJsonp('levels');
 
-  throw new Error('ยังไม่ได้เชื่อม Supabase');
+  return (rows || []).map(level => ({
+    id: level.levelId,
+    level_no: Number(level.levelNo || 0),
+    level_name: level.levelName || '',
+    description: level.description || ''
+  })).sort((a, b) => Number(a.level_no) - Number(b.level_no));
 }
 
 async function apiGetQuestions(levelId) {
-  if (!APP_CONFIG.useSupabase) {
-    return (SAMPLE_QUESTIONS[levelId] || SAMPLE_QUESTIONS.lv1 || []).map(q => ({ ...q }));
-  }
+  const rows = await gasJsonp('questions', {
+    levelId: levelId
+  });
 
-  throw new Error('ยังไม่ได้เชื่อม Supabase');
+  return (rows || []).map(q => ({
+    id: q.questionId,
+    level_id: q.levelId,
+    prompt: q.prompt || '',
+    answer: q.answer || '',
+    choices: Array.isArray(q.choices)
+      ? q.choices
+      : String(q.choices || '').split(',').map(x => x.trim()).filter(Boolean),
+    audioFileId: q.audioFileId || '',
+    audio_url: q.audioFileId
+      ? `https://drive.google.com/uc?export=download&id=${q.audioFileId}`
+      : ''
+  }));
 }
 
 async function apiSaveResult(payload) {
-  if (!APP_CONFIG.useSupabase) {
-    console.log('MOCK SAVE RESULT', payload);
-    return { success: true };
-  }
+  const formData = new FormData();
 
-  throw new Error('ยังไม่ได้เชื่อม Supabase');
+  formData.append('api', 'saveResult');
+  formData.append('payload', JSON.stringify({
+    deviceId: payload.device_id,
+    levelId: payload.level_id,
+    score: payload.score,
+    total: payload.total,
+    stars: payload.stars,
+    details: payload.details || []
+  }));
+
+  await fetch(GAS_API_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: formData
+  });
+
+  return { success: true };
 }
 
 function setLevelStatus(text) {
@@ -798,6 +828,36 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+    function gasJsonp(api, params = {}) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'gas_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+
+    window[callbackName] = function(data) {
+      resolve(data);
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const url = new URL(GAS_API_URL);
+    url.searchParams.set('api', api);
+    url.searchParams.set('callback', callbackName);
+
+    Object.keys(params).forEach(key => {
+      url.searchParams.set(key, params[key]);
+    });
+
+    const script = document.createElement('script');
+    script.src = url.toString();
+    script.onerror = function() {
+      reject(new Error('โหลดข้อมูลจาก Apps Script ไม่สำเร็จ'));
+      delete window[callbackName];
+      script.remove();
+    };
+
+    document.body.appendChild(script);
+  });
 }
 
   </script>
