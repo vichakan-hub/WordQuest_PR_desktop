@@ -502,13 +502,11 @@ async function apiGetLevels() {
 }
 
 async function apiGetQuestions(levelId) {
-  const rows = await gasJsonp('questions', { levelId: levelId });
+  const rows = await gasJsonp('questions', {
+    levelId: levelId
+  });
 
-  if (!Array.isArray(rows)) {
-    throw new Error(rows && rows.message ? rows.message : 'ข้อมูลข้อฝึกที่ได้กลับมาไม่ถูกต้อง');
-  }
-
-  return rows.map(q => ({
+  return (rows || []).map(q => ({
     id: q.questionId,
     level_id: q.levelId,
     prompt: q.prompt || '',
@@ -517,9 +515,7 @@ async function apiGetQuestions(levelId) {
       ? q.choices
       : String(q.choices || '').split(',').map(x => x.trim()).filter(Boolean),
     audioFileId: q.audioFileId || '',
-    audio_url: q.audioFileId
-      ? `https://drive.google.com/uc?export=download&id=${q.audioFileId}`
-      : ''
+    audio_url: ''
   }));
 }
 
@@ -714,19 +710,32 @@ function setFeedback(text, type) {
   if (type === 'bad') el.classList.add('bad');
 }
 
-function playPromptSound() {
+async function playPromptSound() {
   const q = questions[currentIndex];
   if (!q) return;
 
   stopAudio();
 
-  if (q.audio_url) {
-    currentAudio = new Audio(q.audio_url);
-    currentAudio.play().catch(() => speakThai(q.prompt || q.answer || ''));
-    return;
-  }
+  try {
+    if (q.audioFileId) {
+      toast('กำลังโหลดเสียง...');
 
-  speakThai(q.prompt || q.answer || '');
+      const res = await gasJsonp('audio', {
+        fileId: q.audioFileId
+      });
+
+      if (res && res.audioDataUrl) {
+        currentAudio = new Audio(res.audioDataUrl);
+        await currentAudio.play();
+        return;
+      }
+    }
+
+    speakThai(q.prompt || q.answer || '');
+  } catch (err) {
+    console.warn('audio failed', err);
+    speakThai(q.prompt || q.answer || '');
+  }
 }
 
 function stopAudio() {
