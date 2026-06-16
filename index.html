@@ -1393,6 +1393,30 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+    /* =========================================================
+   PATCH: ให้ level panel สูงเท่า 2 แถวเสมอ แม้มี Level แถวเดียว
+   ========================================================= */
+
+.level-pager {
+  min-height: 252px !important;
+}
+
+.level-map-viewport {
+  min-height: 252px !important;
+  height: auto !important;
+  overflow: hidden;
+}
+
+/* ให้ปุ่ม Level เริ่มจากแถวบนเสมอ ไม่ต้องจัดกลางแนวตั้ง */
+.level-map {
+  align-content: start !important;
+}
+
+/* ตำแหน่งลูกศรให้อยู่ระหว่างแถว 1 กับแถว 2 */
+.level-page-btn {
+  top: 128px !important;
+}
+
 
   </style>
 </head>
