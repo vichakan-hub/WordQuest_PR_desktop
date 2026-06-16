@@ -721,6 +721,95 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+    /* =========================================================
+   PATCH: เลือกคำตอบ = ปุ่มสีฟ้าเต็มปุ่ม + ลดพื้นที่ว่างด้านล่าง
+   ========================================================= */
+
+/* ปุ่มที่ถูกเลือก เปลี่ยนจากเหลือง+ขอบฟ้า เป็นฟ้าเต็มปุ่ม */
+.letter-card.selected {
+  color: #fff;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,.62), transparent 25%),
+    linear-gradient(145deg, #67e8f9, #0ea5e9 58%, #0284c7);
+  box-shadow:
+    0 10px 0 #0369a1,
+    0 18px 30px rgba(14, 165, 233, .30);
+  outline: 4px solid rgba(224, 242, 254, .95);
+  outline-offset: 3px;
+  transform: translateY(-5px) scale(1.035);
+  text-shadow: 0 2px 0 rgba(3, 105, 161, .28);
+}
+
+/* ตอนส่งคำตอบแล้วถูก ต้องกลับเป็นสีเขียว ไม่ให้ selected สีฟ้าทับ */
+.letter-card.selected.correct {
+  color: #064e3b;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,.58), transparent 24%),
+    linear-gradient(145deg, #bbf7d0, #22c55e);
+  box-shadow:
+    0 11px 0 #15803d,
+    0 18px 26px rgba(0,0,0,.14);
+  outline: 0;
+  text-shadow: none;
+}
+
+/* ตอนส่งคำตอบแล้วผิด ต้องกลับเป็นสีแดง ไม่ให้ selected สีฟ้าทับ */
+.letter-card.selected.wrong {
+  color: #7f1d1d;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,.58), transparent 24%),
+    linear-gradient(145deg, #fecaca, #f87171);
+  box-shadow:
+    0 11px 0 #dc2626,
+    0 18px 26px rgba(0,0,0,.14);
+  outline: 0;
+  text-shadow: none;
+}
+
+/* ลดพื้นที่ด้านล่างของกล่องเกม */
+.game-panel {
+  padding-bottom: 14px;
+}
+
+/* ลดช่องว่างระหว่างปุ่มส่งคำตอบกับการ์ด */
+.submit-answer-row {
+  margin: -6px 0 14px;
+}
+
+/* ตอน feedback ว่าง ไม่ต้องจองพื้นที่ ทำให้ด้านล่างปุ่มไม่โล่ง */
+.feedback:empty {
+  min-height: 0;
+  margin-top: 0;
+}
+
+/* ตอนมี feedback ค่อยให้มีพื้นที่ */
+.feedback:not(:empty) {
+  min-height: 34px;
+  margin-top: 12px;
+}
+
+/* มือถือ/จอเล็ก ลดพื้นที่อีกนิด */
+@media (max-width: 560px) {
+  .game-panel {
+    padding-bottom: 12px;
+  }
+
+  .submit-answer-row {
+    margin: -4px 0 12px;
+  }
+
+  .feedback:not(:empty) {
+    min-height: 30px;
+    margin-top: 10px;
+  }
+
+  .letter-card.selected {
+    outline-width: 3px;
+    outline-offset: 3px;
+    transform: translateY(-4px) scale(1.025);
+  }
+}
+
 
 
   </style>
