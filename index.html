@@ -1273,6 +1273,54 @@ button { font-family: "Sarabun", sans-serif; }
   min-height: 22px;
 }
 
+    /* =========================================================
+   PATCH: ย้ายปุ่มลูกศรไปอยู่ระหว่างแถว 1 กับแถว 2
+   ========================================================= */
+
+.level-pager {
+  position: relative;
+}
+
+/* บังคับลูกศรให้อยู่ระหว่างแถวบนกับแถวล่าง */
+.level-page-btn {
+  top: 128px !important;
+  transform: translateY(-50%) !important;
+}
+
+/* ลูกศรซ้าย */
+.level-page-prev {
+  left: 18px !important;
+}
+
+/* ลูกศรขวา */
+.level-page-next {
+  right: 18px !important;
+}
+
+/* กัน hover/active แล้วตำแหน่งเพี้ยน */
+.level-page-btn:hover:not(:disabled) {
+  transform: translateY(calc(-50% - 2px)) !important;
+}
+
+.level-page-btn:active:not(:disabled) {
+  transform: translateY(calc(-50% + 4px)) !important;
+}
+
+/* จอเล็ก ขยับขึ้นนิดและชิดขอบน้อยลง */
+@media (max-width: 560px) {
+  .level-page-btn {
+    top: 118px !important;
+  }
+
+  .level-page-prev {
+    left: 4px !important;
+  }
+
+  .level-page-next {
+    right: 4px !important;
+  }
+}
+
 
   </style>
 </head>
