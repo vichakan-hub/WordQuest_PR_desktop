@@ -1320,6 +1320,78 @@ button { font-family: "Sarabun", sans-serif; }
     right: 4px !important;
   }
 }
+    /* =========================================================
+   PATCH: ปุ่มเลื่อน Level เป็นเครื่องหมาย < > เพียว ๆ
+   ========================================================= */
+
+.level-page-btn {
+  width: 48px !important;
+  height: 72px !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+
+  font-size: 4rem !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  color: #075985 !important;
+
+  text-shadow:
+    0 3px 0 rgba(255, 255, 255, .72),
+    0 8px 18px rgba(15, 23, 42, .18);
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  cursor: pointer;
+  opacity: .92;
+  transition: transform .14s ease, opacity .14s ease, filter .14s ease;
+}
+
+.level-page-btn:hover:not(:disabled) {
+  transform: translateY(calc(-50% - 2px)) scale(1.08) !important;
+  filter: brightness(1.05);
+  opacity: 1;
+}
+
+.level-page-btn:active:not(:disabled) {
+  transform: translateY(calc(-50% + 3px)) scale(.96) !important;
+}
+
+.level-page-btn:disabled {
+  opacity: .16 !important;
+  cursor: not-allowed;
+  filter: grayscale(.5);
+}
+
+/* ขยับให้เครื่องหมายชิดขอบซ้าย-ขวาสวยขึ้น */
+.level-page-prev {
+  left: 12px !important;
+}
+
+.level-page-next {
+  right: 12px !important;
+}
+
+@media (max-width: 560px) {
+  .level-page-btn {
+    width: 38px !important;
+    height: 58px !important;
+    font-size: 3rem !important;
+  }
+
+  .level-page-prev {
+    left: 0 !important;
+  }
+
+  .level-page-next {
+    right: 0 !important;
+  }
+}
 
 
   </style>
@@ -1366,17 +1438,17 @@ button { font-family: "Sarabun", sans-serif; }
 
           
           <div class="level-pager" id="levelPager">
-  <button class="level-page-btn level-page-prev" type="button" id="levelPrevBtn" aria-label="หน้าก่อนหน้า">
-    ◀
-  </button>
+<button class="level-page-btn level-page-prev" type="button" id="levelPrevBtn" aria-label="หน้าก่อนหน้า">
+  &lt;
+</button>
 
   <div class="level-map-viewport">
     <div class="level-map" id="levelMap"></div>
   </div>
 
-  <button class="level-page-btn level-page-next" type="button" id="levelNextBtn" aria-label="หน้าถัดไป">
-    ▶
-  </button>
+<button class="level-page-btn level-page-next" type="button" id="levelNextBtn" aria-label="หน้าถัดไป">
+  &gt;
+</button>
 </div>
         </div>
       </div>
