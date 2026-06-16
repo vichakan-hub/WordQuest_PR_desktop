@@ -1241,6 +1241,38 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+    /* =========================================================
+   PATCH: ลดพื้นที่ว่างของ level viewport
+   ========================================================= */
+
+.level-map-viewport {
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden;
+}
+
+.level-pager {
+  margin-bottom: 0 !important;
+}
+
+.level-map {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.level-panel {
+  padding-bottom: 14px !important;
+}
+
+/* ลดช่องว่างด้านล่างชื่อ Level แต่ละปุ่ม */
+.level-wrap {
+  margin-bottom: 0 !important;
+}
+
+.level-name {
+  min-height: 22px;
+}
+
 
   </style>
 </head>
