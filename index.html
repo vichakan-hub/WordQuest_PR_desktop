@@ -644,7 +644,82 @@ button { font-family: "Sarabun", sans-serif; }
     font-size: 1.2rem;
   }
 }
+.submit-answer-row {
+  display: flex;
+  justify-content: center;
+  margin: -4px 0 20px;
+}
 
+.submit-answer-btn {
+  min-width: 220px;
+  height: 58px;
+  border: 0;
+  border-radius: 23px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+  box-shadow:
+    0 8px 0 #15803d,
+    0 16px 26px rgba(22, 163, 74, .24);
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+
+.submit-answer-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.submit-answer-btn:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow:
+    0 3px 0 #15803d,
+    0 8px 18px rgba(22, 163, 74, .20);
+}
+
+.submit-answer-btn:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+  filter: grayscale(.35);
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  box-shadow:
+    0 6px 0 #475569,
+    0 12px 20px rgba(15, 23, 42, .14);
+}
+
+.letter-card.selected {
+  transform: translateY(-5px) scale(1.035);
+  outline: 5px solid #38bdf8;
+  outline-offset: 4px;
+  box-shadow:
+    0 10px 0 #d9a600,
+    0 0 0 8px rgba(186, 230, 253, .88),
+    0 20px 34px rgba(14, 165, 233, .25);
+}
+
+.letter-card:disabled {
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .submit-answer-row {
+    margin: -2px 0 16px;
+  }
+
+  .submit-answer-btn {
+    min-width: 200px;
+    height: 54px;
+    border-radius: 21px;
+    font-size: 1.12rem;
+  }
+
+  .letter-card.selected {
+    outline-width: 4px;
+    outline-offset: 3px;
+  }
+}
 
 
 
@@ -725,11 +800,17 @@ button { font-family: "Sarabun", sans-serif; }
             <button class="sound-button" type="button" id="soundBtn">🔊 ฟังเสียง</button>
           </div>
 
-          <div class="answer-zone-wrap">
-            <div class="answer-zone" id="answerZone"><span class="placeholder">เลือกการ์ดคำตอบ</span></div>
-          </div>
+<div class="answer-zone-wrap">
+  <div class="answer-zone" id="answerZone"><span class="placeholder">เลือกการ์ดคำตอบ</span></div>
+</div>
 
-          <div class="letter-grid" id="letterGrid"></div>
+<div class="submit-answer-row">
+  <button class="submit-answer-btn" type="button" id="submitAnswerBtn" disabled>
+    ส่งคำตอบ
+  </button>
+</div>
+
+<div class="letter-grid" id="letterGrid"></div>
           <div class="feedback" id="feedback"></div>
         </div>
       </div>
@@ -799,6 +880,8 @@ let currentIndex = 0;
 let score = 0;
 let details = [];
 let isAnswering = false;
+let selectedChoice = '';
+let selectedButton = null;
 let currentAudio = null;
 let audioDataUrlCache = {};
 let audioLoadingMap = {};
@@ -838,6 +921,7 @@ function bindEvents() {
   $('restartBtn').addEventListener('click', restartCurrentLevel);
   $('bgmToggleBtn').addEventListener('click', toggleBgm);
   $('correctNextBtn').addEventListener('click', goNextAfterCorrect);
+  $('submitAnswerBtn').addEventListener('click', submitAnswer);
 }
 
 function showScreen(id) {
@@ -863,9 +947,9 @@ function setupClickSfx() {
 
     if (!btn || btn.disabled) return;
 
-    // ปุ่มคำตอบให้เสียง feedback ถูก/ผิด ทำงานเอง
-    // กันไม่ให้ CLICK3.WAV แย่งสิทธิ์เสียงกับ "เก่งมากค่ะ"
-    if (btn.classList.contains('letter-card')) return;
+    // ปุ่มส่งคำตอบอาจตามด้วยเสียง "เก่งมากค่ะ"
+    // จึงไม่ให้ CLICK3.WAV แย่งเสียง
+    if (btn.id === 'submitAnswerBtn') return;
 
     playClickSfx();
   }, true);
@@ -1282,12 +1366,16 @@ async function startLevel(level) {
 
 function renderQuestion() {
   isAnswering = false;
+  selectedChoice = '';
+  selectedButton = null;
+
   const q = questions[currentIndex];
 
   $('missionTitle').textContent = 'ฟังเสียง แล้วเลือกคำตอบ';
   $('missionSubtitle').textContent = `ข้อที่ ${currentIndex + 1} จาก ${questions.length}`;
   $('answerZone').innerHTML = '<span class="placeholder">เลือกการ์ดคำตอบ</span>';
   setFeedback('', '');
+  setSubmitButtonState(false);
 
   const choices = shuffle(Array.isArray(q.choices) ? q.choices.slice() : parseChoices(q.choices));
   const grid = $('letterGrid');
@@ -1298,7 +1386,10 @@ function renderQuestion() {
     btn.type = 'button';
     btn.className = 'letter-card';
     btn.textContent = choice;
-    btn.addEventListener('click', () => answerQuestion(btn, choice));
+
+    // กดการ์ด = เลือกคำตอบ ยังไม่ตรวจ
+    btn.addEventListener('click', () => selectAnswer(btn, choice));
+
     grid.appendChild(btn);
   });
 
@@ -1355,9 +1446,51 @@ function goNextAfterCorrect() {
   }
 }
 
+function setSubmitButtonState(enabled) {
+  const btn = $('submitAnswerBtn');
+  if (!btn) return;
+
+  btn.disabled = !enabled;
+}
+
+function selectAnswer(button, choice) {
+  if (isAnswering) return;
+
+  selectedChoice = choice;
+  selectedButton = button;
+
+  document.querySelectorAll('.letter-card').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+
+  button.classList.add('selected');
+
+  $('answerZone').textContent = choice;
+  setFeedback('', '');
+  setSubmitButtonState(true);
+}
+
+function submitAnswer() {
+  if (isAnswering) return;
+
+  if (!selectedChoice || !selectedButton) {
+    toast('เลือกคำตอบก่อนนะ');
+    setSubmitButtonState(false);
+    return;
+  }
+
+  answerQuestion(selectedButton, selectedChoice);
+}
+
 function answerQuestion(button, choice) {
   if (isAnswering) return;
   isAnswering = true;
+  setSubmitButtonState(false);
+
+  document.querySelectorAll('.letter-card').forEach(btn => {
+    btn.disabled = true;
+  });
+
   stopAudio();
 
   const q = questions[currentIndex];
