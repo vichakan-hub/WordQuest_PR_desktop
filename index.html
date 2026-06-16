@@ -1364,7 +1364,7 @@ button { font-family: "Sarabun", sans-serif; }
             <p class="level-subtitle">ผ่านด่านเพื่อสะสมดาว และปลดล็อกภารกิจถัดไป</p>
           </div>
 
-          <div class="level-map" id="levelMap"></div>
+          
           <div class="level-pager" id="levelPager">
   <button class="level-page-btn level-page-prev" type="button" id="levelPrevBtn" aria-label="หน้าก่อนหน้า">
     ◀
@@ -1997,7 +1997,7 @@ function updateLevelPagerButtons() {
 
   if (!prevBtn || !nextBtn) return;
 
-  const shouldShow = levels.length > LEVELS_PER_PAGE;
+  const shouldShow = getMaxLevelPage() > 0;
   const displayValue = shouldShow ? 'inline-flex' : 'none';
 
   prevBtn.style.display = displayValue;
