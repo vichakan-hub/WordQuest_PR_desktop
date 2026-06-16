@@ -1513,6 +1513,152 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+    /* =========================================================
+   PATCH: ปุ่มลูกศรเลื่อนหน้าแบบตัวอย่าง
+   - ทรงลูกศรใกล้ตัวอย่าง
+   - สีอ่อนลง
+   - อยู่ระหว่างแถว 1 กับ 2
+   - hover แล้วไม่หัวขาด
+   ========================================================= */
+
+/* ให้กรอบรอบ ๆ ไม่ตัดลูกศรตอน hover */
+.level-panel,
+.level-pager,
+.level-screen-inner {
+  overflow: visible !important;
+}
+
+/* ความสูงของ panel ให้เท่า 2 แถวเสมอ */
+.level-pager {
+  position: relative;
+  min-height: 252px !important;
+}
+
+.level-map-viewport {
+  min-height: 252px !important;
+  height: auto !important;
+  overflow: hidden;
+}
+
+.level-map {
+  align-content: start !important;
+  padding-left: 64px !important;
+  padding-right: 64px !important;
+}
+
+/* -------------------------
+   ลูกศรเลื่อนหน้า
+   ------------------------- */
+.level-page-btn {
+  position: absolute;
+  top: 128px !important;   /* อยู่ระหว่างแถว 1 กับ 2 */
+  z-index: 10;
+
+  width: 44px !important;
+  height: 64px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+
+  font-size: 3.5rem !important;
+  line-height: .9 !important;
+  font-weight: 700 !important;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif !important;
+
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.55),
+    0 2px 8px rgba(15, 23, 42, .12);
+
+  cursor: pointer;
+  transform: translateY(-50%) scaleX(1.08) !important;
+  transform-origin: center center;
+  transition:
+    transform .12s ease,
+    color .12s ease,
+    opacity .12s ease,
+    filter .12s ease;
+}
+
+/* ชิดขอบขึ้นอีกนิด */
+.level-page-prev {
+  left: 6px !important;
+}
+
+.level-page-next {
+  right: 6px !important;
+}
+
+/* hover: ขยายเบา ๆ พอ ไม่กระเด้งขึ้นจนโดนตัด */
+.level-page-btn:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.96) !important;
+  filter: brightness(1.02);
+  transform: translateY(-50%) scaleX(1.14) scaleY(1.06) !important;
+}
+
+/* active */
+.level-page-btn:active:not(:disabled) {
+  color: rgba(255, 255, 255, 1) !important;
+  transform: translateY(-50%) scaleX(1.02) scaleY(.98) !important;
+}
+
+/* disabled */
+.level-page-btn:disabled {
+  opacity: .22 !important;
+  cursor: not-allowed;
+  text-shadow: none;
+  filter: grayscale(.15);
+}
+
+/* มือถือ */
+@media (max-width: 560px) {
+  .level-pager {
+    min-height: 240px !important;
+  }
+
+  .level-map-viewport {
+    min-height: 240px !important;
+  }
+
+  .level-map {
+    padding-left: 46px !important;
+    padding-right: 46px !important;
+  }
+
+  .level-page-btn {
+    top: 118px !important;
+    width: 34px !important;
+    height: 54px !important;
+    font-size: 2.7rem !important;
+    transform: translateY(-50%) scaleX(1.06) !important;
+  }
+
+  .level-page-prev {
+    left: 2px !important;
+  }
+
+  .level-page-next {
+    right: 2px !important;
+  }
+
+  .level-page-btn:hover:not(:disabled) {
+    transform: translateY(-50%) scaleX(1.1) scaleY(1.04) !important;
+  }
+
+  .level-page-btn:active:not(:disabled) {
+    transform: translateY(-50%) scaleX(1.0) scaleY(.98) !important;
+  }
+}
+
 
   </style>
 </head>
@@ -1559,7 +1705,7 @@ button { font-family: "Sarabun", sans-serif; }
           
           <div class="level-pager" id="levelPager">
 <button class="level-page-btn level-page-prev" type="button" id="levelPrevBtn" aria-label="หน้าก่อนหน้า">
-  &lt;
+  ❮
 </button>
 
   <div class="level-map-viewport">
@@ -1567,7 +1713,7 @@ button { font-family: "Sarabun", sans-serif; }
   </div>
 
 <button class="level-page-btn level-page-next" type="button" id="levelNextBtn" aria-label="หน้าถัดไป">
-  &gt;
+  ❯
 </button>
 </div>
         </div>
