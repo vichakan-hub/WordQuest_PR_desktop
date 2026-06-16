@@ -904,6 +904,149 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+/* =========================================================
+   PATCH: overlay ตอบผิด - ลองใหม่นะ
+   ========================================================= */
+
+.wrong-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(251, 146, 60, .22), transparent 32%),
+    rgba(15, 23, 42, .34);
+  backdrop-filter: blur(10px);
+}
+
+.wrong-overlay.show {
+  display: flex;
+  animation: wrongFadeIn .18s ease both;
+}
+
+@keyframes wrongFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.wrong-card {
+  width: min(400px, 92vw);
+  border-radius: 32px;
+  padding: 28px 24px 26px;
+  text-align: center;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, .88), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 247, 237, .94));
+  border: 3px solid rgba(255, 255, 255, .88);
+  box-shadow:
+    0 26px 68px rgba(15, 23, 42, .26),
+    inset 0 1px 0 rgba(255, 255, 255, .9);
+  animation: wrongPop .24s cubic-bezier(.2, 1.25, .35, 1) both;
+}
+
+@keyframes wrongPop {
+  from {
+    transform: translateY(16px) scale(.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.wrong-badge {
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 12px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  background: linear-gradient(145deg, #ffedd5, #fb923c);
+  box-shadow:
+    0 9px 0 #ea580c,
+    0 16px 26px rgba(249, 115, 22, .24);
+}
+
+.wrong-title {
+  margin: 8px 0 6px;
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 900;
+  color: #c2410c;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .9);
+}
+
+.wrong-text {
+  margin: 0 0 20px;
+  font-size: 1.02rem;
+  line-height: 1.4;
+  font-weight: 900;
+  color: #7c3f16;
+}
+
+.wrong-retry-btn {
+  width: min(240px, 100%);
+  height: 60px;
+  border: 0;
+  border-radius: 23px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, #fb923c, #f97316);
+  box-shadow:
+    0 8px 0 #c2410c,
+    0 16px 26px rgba(249, 115, 22, .24);
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+}
+
+.wrong-retry-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.wrong-retry-btn:active {
+  transform: translateY(5px);
+  box-shadow:
+    0 3px 0 #c2410c,
+    0 8px 18px rgba(249, 115, 22, .20);
+}
+
+@media (max-width: 560px) {
+  .wrong-card {
+    padding: 24px 20px 22px;
+    border-radius: 28px;
+  }
+
+  .wrong-badge {
+    width: 74px;
+    height: 74px;
+    font-size: 2.9rem;
+    border-radius: 24px;
+  }
+
+  .wrong-title {
+    font-size: 1.75rem;
+  }
+
+  .wrong-retry-btn {
+    height: 56px;
+    font-size: 1.12rem;
+  }
+}
+
 
 
   </style>
@@ -1035,6 +1178,18 @@ button { font-family: "Sarabun", sans-serif; }
   </div>
 </div>
 
+  <div class="wrong-overlay" id="wrongOverlay" aria-hidden="true">
+  <div class="wrong-card" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
+    <div class="wrong-badge">💪</div>
+    <h2 class="wrong-title" id="wrongTitle">ลองใหม่นะ</h2>
+    <p class="wrong-text" id="wrongText">ยังไม่ถูก ลองเลือกคำตอบอีกครั้ง</p>
+
+    <button class="wrong-retry-btn" type="button" id="retryQuestionBtn">
+      ลองอีกครั้ง
+    </button>
+  </div>
+</div>
+
   <div class="loading-overlay" id="gameLoadingOverlay" aria-hidden="true">
     <div class="loading-card" role="status" aria-live="polite">
       <div class="loading-icon">🔊</div>
@@ -1105,6 +1260,7 @@ function bindEvents() {
   $('bgmToggleBtn').addEventListener('click', toggleBgm);
   $('correctNextBtn').addEventListener('click', goNextAfterCorrect);
   $('submitAnswerBtn').addEventListener('click', submitAnswer);
+  $('retryQuestionBtn').addEventListener('click', retryCurrentQuestion);
 }
 
 function showScreen(id) {
@@ -1609,6 +1765,45 @@ function parseChoices(value) {
   }, 80);
 }
 
+    function showWrongOverlay() {
+  const overlay = $('wrongOverlay');
+  const btn = $('retryQuestionBtn');
+
+  if (!overlay || !btn) return;
+
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+
+  setTimeout(() => {
+    btn.focus();
+  }, 80);
+}
+
+function hideWrongOverlay() {
+  const overlay = $('wrongOverlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function retryCurrentQuestion() {
+  hideWrongOverlay();
+
+  isAnswering = false;
+  selectedChoice = '';
+  selectedButton = null;
+
+  $('answerZone').innerHTML = '<span class="placeholder">เลือกการ์ดคำตอบ</span>';
+  setFeedback('', '');
+  setSubmitButtonState(false);
+
+  document.querySelectorAll('.letter-card').forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('selected', 'wrong', 'correct');
+  });
+}
+
 function hideCorrectOverlay() {
   const overlay = $('correctOverlay');
   if (!overlay) return;
@@ -1686,36 +1881,25 @@ function answerQuestion(button, choice) {
     button.classList.add('correct');
     setFeedback('ถูกต้อง เก่งมาก! ⭐', 'good');
     playCorrectVoice();
-  } else {
-    button.classList.add('wrong');
-    setFeedback(`ยังไม่ถูก คำตอบคือ ${q.answer}`, 'bad');
-    highlightCorrect(q.answer);
-  }
 
-  details.push({
-    questionId: q.id || '',
-    prompt: q.prompt || '',
-    answer: q.answer || '',
-    selected: choice,
-    correct
-  });
+    details.push({
+      questionId: q.id || '',
+      prompt: q.prompt || '',
+      answer: q.answer || '',
+      selected: choice,
+      correct: true
+    });
 
-  updateHud();
-
-  if (correct) {
+    updateHud();
     showCorrectOverlay();
     return;
   }
 
-  setTimeout(() => {
-    currentIndex += 1;
-
-    if (currentIndex >= questions.length) {
-      finishLevel();
-    } else {
-      renderQuestion();
-    }
-  }, 1200);
+  // ตอบผิด: ไม่เฉลย ไม่ข้ามข้อ ไม่บันทึกเป็นคำตอบสุดท้าย
+  button.classList.add('wrong');
+  setFeedback('', '');
+  updateHud();
+  showWrongOverlay();
 }
 
 function highlightCorrect(answer) {
