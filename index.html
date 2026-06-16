@@ -1164,6 +1164,7 @@ button { font-family: "Sarabun", sans-serif; }
 <audio id="bgmAudio" src="assets/bgm.mp3" preload="auto" loop></audio>
 <audio id="clickSfxAudio" src="assets/CLICK3.WAV" preload="auto"></audio>
 <audio id="correctVoiceAudio" src="assets/kengmakka.mp3?v=1" preload="auto"></audio>
+<audio id="wrongVoiceAudio" src="assets/longeekkang.mp3?v=1" preload="auto"></audio>
 <button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
 
   <div class="correct-overlay" id="correctOverlay" aria-hidden="true">
@@ -1308,6 +1309,8 @@ function playClickSfx() {
 }
 
 let correctVoicePlayer = null;
+let wrongVoicePlayer = null;
+
 
 function playCorrectVoice() {
   const voice = $('correctVoiceAudio');
@@ -1354,6 +1357,54 @@ function playCorrectVoice() {
   } catch (err) {
     console.warn('correct voice failed:', err);
     speakThai('เก่งมากค่ะ');
+  }
+}
+
+    function playWrongVoice() {
+  const voice = $('wrongVoiceAudio');
+
+  duckBgmTemporarily(1600);
+
+  if (!voice) {
+    speakThai('ลองใหม่นะ');
+    return;
+  }
+
+  const src = voice.currentSrc || voice.getAttribute('src') || voice.src;
+
+  if (!src) {
+    speakThai('ลองใหม่นะ');
+    return;
+  }
+
+  try {
+    if (wrongVoicePlayer) {
+      wrongVoicePlayer.pause();
+      wrongVoicePlayer.currentTime = 0;
+    }
+
+    wrongVoicePlayer = new Audio(src);
+    wrongVoicePlayer.volume = 1;
+    wrongVoicePlayer.preload = 'auto';
+
+    wrongVoicePlayer.addEventListener('error', () => {
+      console.warn('wrong voice file error:', src);
+      toast('ไม่พบไฟล์เสียงลองใหม่นะ ตรวจชื่อไฟล์ใน assets');
+      speakThai('ลองใหม่นะ');
+    }, { once: true });
+
+    const playPromise = wrongVoicePlayer.play();
+
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(err => {
+        console.warn('wrong voice failed:', err);
+        toast('เสียงลองใหม่นะยังเล่นไม่ได้');
+        speakThai('ลองใหม่นะ');
+      });
+    }
+  } catch (err) {
+    console.warn('wrong voice failed:', err);
+    speakThai('ลองใหม่นะ');
   }
 }
 
@@ -1895,11 +1946,12 @@ function answerQuestion(button, choice) {
     return;
   }
 
-  // ตอบผิด: ไม่เฉลย ไม่ข้ามข้อ ไม่บันทึกเป็นคำตอบสุดท้าย
-  button.classList.add('wrong');
-  setFeedback('', '');
-  updateHud();
-  showWrongOverlay();
+// ตอบผิด: ไม่เฉลย ไม่ข้ามข้อ ไม่บันทึกเป็นคำตอบสุดท้าย
+button.classList.add('wrong');
+setFeedback('', '');
+updateHud();
+playWrongVoice();
+showWrongOverlay();
 }
 
 function highlightCorrect(answer) {
