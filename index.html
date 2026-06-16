@@ -809,6 +809,96 @@ button { font-family: "Sarabun", sans-serif; }
     transform: translateY(-4px) scale(1.025);
   }
 }
+/* =========================================================
+   PATCH: เอากรอบขาวออก + ซ่อน feedback + จัด item ให้กระจายพอดี
+   ========================================================= */
+
+/* เอากรอบขาวใหญ่ของหน้าเกมออก */
+.game-panel {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+
+  width: min(900px, 68vw);
+  padding: 4px 28px 0 !important;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ให้หัวข้ออ่านชัดขึ้น เมื่อไม่มีกรอบขาวรองหลัง */
+.mission-title {
+  margin: 0 !important;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .72);
+}
+
+.mission-subtitle {
+  margin: -4px auto 4px !important;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .72);
+}
+
+/* ปรับปุ่มฟังเสียงให้ไม่ห่างเกิน */
+.sound-row {
+  margin: 4px 0 8px !important;
+}
+
+/* ปรับช่องคำตอบให้พอดี */
+.answer-zone-wrap {
+  margin: 4px 0 6px !important;
+}
+
+/* ปุ่มส่งคำตอบให้ชิดพอดีกับช่องคำตอบและการ์ด */
+.submit-answer-row {
+  margin: 0 0 10px !important;
+}
+
+/* การ์ดคำตอบ */
+.letter-grid {
+  margin: 0 auto !important;
+}
+
+/* ซ่อนช่อง feedback ด้านล่างออกไปเลย แต่ไม่ลบ HTML */
+.feedback {
+  display: none !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ลดความสูงรวมของพื้นที่เกมให้ไม่เหลือช่องว่างล่าง */
+.game-screen-inner {
+  gap: 8px !important;
+}
+
+/* จอเล็ก/มือถือ */
+@media (max-width: 560px) {
+  .game-panel {
+    width: min(94vw, 680px);
+    padding: 2px 14px 0 !important;
+    gap: 8px;
+  }
+
+  .mission-subtitle {
+    margin: -3px auto 2px !important;
+  }
+
+  .sound-row {
+    margin: 2px 0 6px !important;
+  }
+
+  .answer-zone-wrap {
+    margin: 2px 0 5px !important;
+  }
+
+  .submit-answer-row {
+    margin: 0 0 8px !important;
+  }
+}
 
 
 
