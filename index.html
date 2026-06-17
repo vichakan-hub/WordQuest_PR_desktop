@@ -1700,6 +1700,205 @@ button { font-family: "Sarabun", sans-serif; }
   top: 128px !important;
 }
 
+    /* =========================================================
+   PATCH: Settings Gear + Sound Setting Card
+   ========================================================= */
+
+.settings-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: calc(env(safe-area-inset-right, 0px) + 14px);
+  z-index: 1350;
+
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 18px;
+
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1.45rem;
+  color: #075985;
+  background: rgba(224, 242, 254, .92);
+  border: 1px solid rgba(255,255,255,.82);
+  box-shadow: 0 10px 22px rgba(15,23,42,.16);
+  backdrop-filter: blur(10px);
+
+  transition: transform .14s ease, filter .14s ease, opacity .14s ease;
+}
+
+.settings-toggle:hover {
+  transform: translateY(-2px) rotate(8deg);
+  filter: brightness(1.04);
+}
+
+.settings-toggle:active {
+  transform: translateY(2px) rotate(-4deg);
+}
+
+.sound-settings-card {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 74px);
+  right: calc(env(safe-area-inset-right, 0px) + 14px);
+  z-index: 1349;
+
+  width: 270px;
+  padding: 14px;
+  border-radius: 24px;
+
+  display: none;
+
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255,255,255,.82), transparent 40%),
+    rgba(239, 249, 255, .94);
+  border: 2px solid rgba(255,255,255,.82);
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, .18),
+    inset 0 1px 0 rgba(255,255,255,.72);
+  backdrop-filter: blur(14px);
+}
+
+.sound-settings-card.show {
+  display: block;
+  animation: soundSettingsIn .18s ease both;
+}
+
+@keyframes soundSettingsIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sound-settings-title {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.sound-setting-row {
+  min-height: 58px;
+  padding: 10px 8px;
+  border-radius: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  background: rgba(255,255,255,.58);
+  border: 1px solid rgba(255,255,255,.68);
+}
+
+.sound-setting-row + .sound-setting-row {
+  margin-top: 8px;
+}
+
+.sound-setting-text {
+  min-width: 0;
+}
+
+.sound-setting-label {
+  font-size: .95rem;
+  line-height: 1.15;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.sound-setting-sub {
+  margin-top: 3px;
+  font-size: .75rem;
+  line-height: 1.1;
+  font-weight: 900;
+  color: rgba(66, 98, 125, .82);
+}
+
+/* ปุ่มเลื่อนซ้าย-ขวา */
+.switch-btn {
+  flex: 0 0 auto;
+
+  width: 62px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+
+  position: relative;
+  cursor: pointer;
+
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+  box-shadow:
+    inset 0 2px 5px rgba(15,23,42,.16),
+    0 6px 12px rgba(15,23,42,.10);
+
+  transition: background .18s ease, filter .18s ease;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+
+  background: #fff;
+  box-shadow:
+    0 3px 8px rgba(15,23,42,.18),
+    inset 0 1px 0 rgba(255,255,255,.9);
+
+  transition: transform .18s cubic-bezier(.2, 1.2, .35, 1);
+}
+
+.switch-btn.on {
+  background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+}
+
+.switch-btn.on .switch-knob {
+  transform: translateX(28px);
+}
+
+.switch-btn:hover {
+  filter: brightness(1.04);
+}
+
+.switch-btn:active .switch-knob {
+  transform: scale(.94);
+}
+
+.switch-btn.on:active .switch-knob {
+  transform: translateX(28px) scale(.94);
+}
+
+@media (max-width: 560px) {
+  .settings-toggle {
+    width: 46px;
+    height: 46px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    right: calc(env(safe-area-inset-right, 0px) + 10px);
+    border-radius: 16px;
+    font-size: 1.25rem;
+  }
+
+  .sound-settings-card {
+    top: calc(env(safe-area-inset-top, 0px) + 62px);
+    right: calc(env(safe-area-inset-right, 0px) + 10px);
+    width: min(260px, calc(100vw - 20px));
+    border-radius: 22px;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -1835,7 +2034,35 @@ button { font-family: "Sarabun", sans-serif; }
 <audio id="clickSfxAudio" src="assets/CLICK3.WAV" preload="auto"></audio>
 <audio id="correctVoiceAudio" src="assets/kengmakka.mp3?v=1" preload="auto"></audio>
 <audio id="wrongVoiceAudio" src="assets/longeekkang.mp3?v=1" preload="auto"></audio>
-<button class="bgm-toggle" type="button" id="bgmToggleBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
+<button class="settings-toggle" type="button" id="settingsBtn" aria-label="ตั้งค่าเสียง">
+  ⚙️
+</button>
+
+<div class="sound-settings-card" id="soundSettingsCard" aria-hidden="true">
+  <div class="sound-settings-title">ตั้งค่าเสียง</div>
+
+  <div class="sound-setting-row">
+    <div class="sound-setting-text">
+      <div class="sound-setting-label">เสียง BGM</div>
+      <div class="sound-setting-sub" id="bgmStateText">เปิด</div>
+    </div>
+
+    <button class="switch-btn" type="button" id="bgmSwitchBtn" role="switch" aria-checked="true">
+      <span class="switch-knob"></span>
+    </button>
+  </div>
+
+  <div class="sound-setting-row">
+    <div class="sound-setting-text">
+      <div class="sound-setting-label">เสียงปุ่มกด</div>
+      <div class="sound-setting-sub" id="sfxStateText">เปิด</div>
+    </div>
+
+    <button class="switch-btn" type="button" id="sfxSwitchBtn" role="switch" aria-checked="true">
+      <span class="switch-knob"></span>
+    </button>
+  </div>
+</div>
 
   <div class="correct-overlay" id="correctOverlay" aria-hidden="true">
   <div class="correct-card" role="dialog" aria-modal="true" aria-labelledby="correctTitle">
@@ -1881,6 +2108,7 @@ const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbykPnlgx_y0OfbLUbXN
 const STORAGE_KEY = 'WORD_QUEST_PROGRESS_GITHUB_V1';
 const DEVICE_KEY = 'WORD_QUEST_DEVICE_ID';
 const BGM_SETTING_KEY = 'WORD_QUEST_BGM_ON';
+const SFX_SETTING_KEY = 'WORD_QUEST_SFX_ON';
 
 const LEVELS_PER_PAGE = 10;
 
@@ -1903,6 +2131,7 @@ let gameLoadingTargetPercent = 0;
 let gameLoadingAnimFrame = null;
 let gameLoadingAutoTimer = null;
 let bgmEnabled = localStorage.getItem(BGM_SETTING_KEY) !== 'off';
+let sfxEnabled = localStorage.getItem(SFX_SETTING_KEY) !== 'off';
 const $ = (id) => document.getElementById(id);
 
 window.addEventListener('DOMContentLoaded', init);
@@ -1913,6 +2142,7 @@ function init() {
   bindEvents();
   setupClickSfx();
   updateBgmButton();
+  updateSfxButton();
   setHomeLoading(8, '', 'loading');
   loadLevels();
 }
@@ -1925,19 +2155,27 @@ function setupLogoFallbacks() {
   });
 }
 
+
 function bindEvents() {
   $('startBtn').addEventListener('click', enterLevelScreen);
   $('backLevelBtn').addEventListener('click', backToLevels);
   $('soundBtn').addEventListener('click', playPromptSound);
   $('continueBtn').addEventListener('click', backToLevels);
   $('restartBtn').addEventListener('click', restartCurrentLevel);
-  $('bgmToggleBtn').addEventListener('click', toggleBgm);
+
   $('correctNextBtn').addEventListener('click', goNextAfterCorrect);
   $('submitAnswerBtn').addEventListener('click', submitAnswer);
   $('retryQuestionBtn').addEventListener('click', retryCurrentQuestion);
 
   $('levelPrevBtn').addEventListener('click', () => changeLevelPage(-1));
   $('levelNextBtn').addEventListener('click', () => changeLevelPage(1));
+
+  $('settingsBtn').addEventListener('click', toggleSoundSettingsCard);
+  $('bgmSwitchBtn').addEventListener('click', toggleBgm);
+  $('sfxSwitchBtn').addEventListener('click', toggleSfx);
+
+  document.addEventListener('click', closeSoundSettingsOnOutsideClick);
+  document.addEventListener('keydown', closeSoundSettingsOnEscape);
 }
 
 function showScreen(id) {
@@ -1962,8 +2200,9 @@ function setupClickSfx() {
     const btn = event.target.closest('button');
 
     if (!btn || btn.disabled) return;
+    if (!sfxEnabled) return;
 
-    // ปุ่มส่งคำตอบอาจตามด้วยเสียง "เก่งมากค่ะ"
+    // ปุ่มส่งคำตอบอาจตามด้วยเสียง "เก่งมากค่ะ" / "ลองใหม่นะ"
     // จึงไม่ให้ CLICK3.WAV แย่งเสียง
     if (btn.id === 'submitAnswerBtn') return;
 
@@ -1972,6 +2211,8 @@ function setupClickSfx() {
 }
 
 function playClickSfx() {
+  if (!sfxEnabled) return;
+
   const base = $('clickSfxAudio');
   if (!base) return;
 
@@ -2124,12 +2365,93 @@ function toggleBgm() {
 }
 
 function updateBgmButton() {
-  const btn = $('bgmToggleBtn');
+  const btn = $('bgmSwitchBtn');
+  const label = $('bgmStateText');
+
   if (!btn) return;
 
-  btn.textContent = bgmEnabled ? '🎵' : '🔇';
-  btn.classList.toggle('off', !bgmEnabled);
-  btn.setAttribute('aria-label', bgmEnabled ? 'ปิดเพลงพื้นหลัง' : 'เปิดเพลงพื้นหลัง');
+  btn.classList.toggle('on', bgmEnabled);
+  btn.setAttribute('aria-checked', bgmEnabled ? 'true' : 'false');
+
+  if (label) {
+    label.textContent = bgmEnabled ? 'เปิด' : 'ปิด';
+  }
+}
+
+    function toggleSfx() {
+  sfxEnabled = !sfxEnabled;
+  localStorage.setItem(SFX_SETTING_KEY, sfxEnabled ? 'on' : 'off');
+
+  updateSfxButton();
+
+  // ตอนเปิดเสียงปุ่มกลับมา ให้มีเสียงยืนยันเบา ๆ
+  if (sfxEnabled) {
+    playClickSfx();
+  }
+}
+
+function updateSfxButton() {
+  const btn = $('sfxSwitchBtn');
+  const label = $('sfxStateText');
+
+  if (!btn) return;
+
+  btn.classList.toggle('on', sfxEnabled);
+  btn.setAttribute('aria-checked', sfxEnabled ? 'true' : 'false');
+
+  if (label) {
+    label.textContent = sfxEnabled ? 'เปิด' : 'ปิด';
+  }
+}
+
+function toggleSoundSettingsCard(event) {
+  if (event) event.stopPropagation();
+
+  const card = $('soundSettingsCard');
+  if (!card) return;
+
+  const isOpen = card.classList.contains('show');
+
+  if (isOpen) {
+    closeSoundSettingsCard();
+  } else {
+    openSoundSettingsCard();
+  }
+}
+
+function openSoundSettingsCard() {
+  const card = $('soundSettingsCard');
+  if (!card) return;
+
+  card.classList.add('show');
+  card.setAttribute('aria-hidden', 'false');
+}
+
+function closeSoundSettingsCard() {
+  const card = $('soundSettingsCard');
+  if (!card) return;
+
+  card.classList.remove('show');
+  card.setAttribute('aria-hidden', 'true');
+}
+
+function closeSoundSettingsOnOutsideClick(event) {
+  const card = $('soundSettingsCard');
+  const btn = $('settingsBtn');
+
+  if (!card || !btn) return;
+  if (!card.classList.contains('show')) return;
+
+  const target = event.target;
+
+  if (card.contains(target) || btn.contains(target)) return;
+
+  closeSoundSettingsCard();
+}
+
+function closeSoundSettingsOnEscape(event) {
+  if (event.key !== 'Escape') return;
+  closeSoundSettingsCard();
 }
 
 function enterLevelScreen() {
