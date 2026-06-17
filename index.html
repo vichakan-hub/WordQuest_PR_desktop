@@ -1659,6 +1659,46 @@ button { font-family: "Sarabun", sans-serif; }
   }
 }
 
+    /* =========================================================
+   PATCH: ล็อกความสูง level-panel ให้เท่ากันทุกหน้า
+   หน้า 1-10 และ 11-15 จะสูงเท่ากัน
+   ========================================================= */
+
+:root {
+  --level-pager-fixed-height: 276px;
+}
+
+/* ล็อกพื้นที่แสดง Level ให้สูงเท่ากันทุกหน้า */
+.level-pager {
+  height: var(--level-pager-fixed-height) !important;
+  min-height: var(--level-pager-fixed-height) !important;
+  max-height: var(--level-pager-fixed-height) !important;
+}
+
+/* viewport ต้องสูงเท่ากัน ไม่ใช้ auto */
+.level-map-viewport {
+  height: var(--level-pager-fixed-height) !important;
+  min-height: var(--level-pager-fixed-height) !important;
+  max-height: var(--level-pager-fixed-height) !important;
+  overflow: hidden !important;
+}
+
+/* ให้ปุ่ม Level เริ่มจากด้านบนเหมือนกันทุกหน้า */
+.level-map {
+  align-content: start !important;
+  margin-top: 10px !important;
+  margin-bottom: 0 !important;
+}
+
+/* panel จะได้คำนวณจากความสูงเดียวกันทุกหน้า */
+.level-panel {
+  padding-bottom: 24px !important;
+}
+
+/* ลูกศรยังอยู่ระหว่างแถว 1 กับ 2 */
+.level-page-btn {
+  top: 128px !important;
+}
 
   </style>
 </head>
